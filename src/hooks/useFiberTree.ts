@@ -1,0 +1,1 @@
+//access React DevTools global hook and invoke parseFiber
