@@ -1,1 +1,1 @@
-//to render current snapshot or diff
+// used to render UI and works in tandem with MainContainer (where logic, state, and context are managed)

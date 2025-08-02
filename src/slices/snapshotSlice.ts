@@ -1,0 +1,59 @@
+//Setup Redux w/ actions + reducers in one place and type action.payload
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'; 
+
+//define shape of state for this slice
+export interface SnapshotState {
+  snapshots: any[]; // should we type this more strictly?
+  currentIndex: number;
+  playing: boolean;
+  intervalId: number | null;
+}
+
+const initialState: SnapshotState = {
+  snapshots: [],
+  currentIndex: 0,
+  playing: false,
+  intervalId: null,
+};
+
+const snapshotSlice = createSlice({
+  name: 'snapshot',
+  initialState,
+  reducers: {
+    
+    addSnapshot: (state, action: PayloadAction<any>) => { 
+      state.snapshots.push(action.payload); //adds new snapshot to array in SnapshotState
+      state.currentIndex = state.snapshots.length - 1; // updates currentIndex to most recent snapshot
+    },
+    jumpToSnapshot: (state, action: PayloadAction<number>) => {
+      const newIndex = action.payload;
+      if (newIndex >= 0 && newIndex < state.snapshots.length) { 
+        state.currentIndex = newIndex;
+      }
+    },
+    resetSnapshots: (state) => { //used when restarting debugging or reloading app
+      state.snapshots = [];
+      state.currentIndex = 0;
+      state.playing = false;
+      state.intervalId = null;
+    },
+    playSnapshots: (state, action: PayloadAction<number>) => {
+      state.playing = true;
+      state.intervalId = action.payload;
+    },
+    pauseSnapshots: (state) => {
+      state.playing = false;
+      state.intervalId = null;
+    },
+  },
+});
+
+export const {
+  addSnapshot,
+  jumpToSnapshot,
+  resetSnapshots,
+  playSnapshots,
+  pauseSnapshots,
+} = snapshotSlice.actions;
+
+export default snapshotSlice.reducer;
