@@ -2,20 +2,24 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
-import MainContainer from '../containers/MainContainer';
-// import { Toaster } from 'react-hot-toast'; // Optional
-// import { ThemeProvider } from './ThemeProvider'; // Optional
+import MainContainer from './containers/MainContainer';
+import { ThemeProvider } from './ThemeProvider'; // Optional
 
-function App(): JSX.Element {
+function App(): React.JSX.Element {
   return (
     <Provider store={store}>
-      <ThemeProvider>
-        <Toaster />
-        <MainContainer />
-      </ThemeProvider>
+      <MainContainer />
     </Provider>
   );
 }
 
 export default App;
+
+/**
+ * <Provider store={store}>
+      <ThemeProvider>
+        <MainContainer />
+      </ThemeProvider>
+    </Provider>
+ */
 
