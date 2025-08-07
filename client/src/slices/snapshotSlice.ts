@@ -1,5 +1,8 @@
 //Setup Redux w/ actions + reducers in one place and type action.payload
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'; 
+//'PayloadAction' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled
+import type { PayloadAction } from '@reduxjs/toolkit'; 
+//separated createSlice from PayloadAction because of type distinction required for PayloadAction
+import { createSlice } from '@reduxjs/toolkit'; 
 
 //define shape of state for this slice
 export interface SnapshotState {
