@@ -2,5 +2,9 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",
     "react-redux": "^9.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7"
   }
 }
