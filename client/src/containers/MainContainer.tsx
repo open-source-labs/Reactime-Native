@@ -5,7 +5,6 @@ import useSnapshotRecorder from '../hooks/useSnapshotRecorder';
 const MainContainer = (): React.JSX.Element => {
   const [fiberTree, setFiberTree] = useState<{ state: string } | null>(null); // can also use the following for more shape fleixbility: const [fiberTree, setFiberTree] = useState<any>(null);
 
-  // Pseudocode:
   // 1. Connect to WebSocket here (future)
   // 2. Update fiberTree when new data comes in
   // 3. Use useSnapshotRecorder hook to dispatch snapshot to store
