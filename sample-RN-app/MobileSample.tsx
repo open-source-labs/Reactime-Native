@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Button, Text, StyleSheet, Pressable } from 'react-native';
 import Constants from 'expo-constants';
-import { logFiber, traverse } from '../client/src/hooks/useFiberTree';
+import { logFiber, traverse } from './useFiberTree';
 
 /** Compute laptop IP so the phone can reach ws://<IP>:8080 */
 // const devHost =
