@@ -4,8 +4,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server",
-    "dev": "nodemon server"
+    "start": "node index",
+    "dev": "nodemon index"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +13,8 @@
   "description": "",
   "devDependencies": {
     "nodemon": "^3.1.10"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
   }
 }
