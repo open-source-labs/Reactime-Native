@@ -5,8 +5,9 @@ import { useSelector, useDispatch } from 'react-redux';
 // 'RootState' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
 import type { RootState } from '../store/store';
 import { jumpToSnapshot } from '../slices/snapshotSlice';
+import ToolTipDataDisplay from './ToolTipDataDisplay';
 
-const SnapshotView = (): React.JSX.Element => {
+const SnapshotView = ({ snapshotArray }): React.JSX.Element => {
   const snapshots = useSelector((state: RootState) => state.snapshot.snapshots);
   const currentIndex = useSelector((state: RootState) => state.snapshot.currentIndex);
   const dispatch = useDispatch();
@@ -19,6 +20,20 @@ const SnapshotView = (): React.JSX.Element => {
   return (
     <div>
       <h2>Snapshot Timeline</h2>
+      {/* <ul>
+        {snapshotArray.map((msgSnap, index) => (
+          <li key={index}>
+            {JSON.stringify(msgSnap, null, 2)}
+          </li>
+        ))}
+      </ul> */}
+      <ol start="0">
+        {snapshotArray.map((msgSnap, index) => (
+          <li key={index}>
+            <ToolTipDataDisplay data={JSON.stringify(msgSnap, null, 2)} />
+          </li>
+        ))}
+      </ol>
       <div style={{ display: 'flex', gap: '0.5rem' }}>
         {snapshots.map((snap, index) => (
           <button
