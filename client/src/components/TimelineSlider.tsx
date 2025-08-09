@@ -37,6 +37,7 @@ const tooltipHandle: SliderProps['handleRender'] = (props) => {
 };
 
 const TimelineSlider: React.FC = () => {
+  console.log("We're in timeline slider module.")
   const dispatch = useDispatch();
 
   const snapshotsLength = useSelector(
@@ -57,6 +58,7 @@ const TimelineSlider: React.FC = () => {
 
   return (
     <div style={{ padding: '8px 0' }}>
+      <p>Hello</p>
       <Slider
         min={0}
         max={Math.max(0, snapshotsLength - 1)}

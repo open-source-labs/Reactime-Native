@@ -6,6 +6,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 //define shape of state for this slice
 export interface SnapshotState {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   snapshots: any[]; // should we type this more strictly?
   currentIndex: number;
   playing: boolean;
@@ -24,6 +25,7 @@ const snapshotSlice = createSlice({
   initialState,
   reducers: {
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     addSnapshot: (state, action: PayloadAction<any>) => { 
       state.snapshots.push(action.payload); //adds new snapshot to array in SnapshotState
       state.currentIndex = state.snapshots.length - 1; // updates currentIndex to most recent snapshot

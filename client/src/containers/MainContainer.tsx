@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import SnapshotView from '../components/SnapshotView';
 import useSnapshotRecorder from '../hooks/useSnapshotRecorder';
+import TimelineSlider from '../components/TimelineSlider'
 
 const MainContainer = (): React.JSX.Element => {
   const [fiberTree, setFiberTree] = useState<{ state: string } | null>(null); // can also use the following for more shape fleixbility: const [fiberTree, setFiberTree] = useState<any>(null);
@@ -21,6 +22,7 @@ const MainContainer = (): React.JSX.Element => {
     <div>
       <h1>Reactime Native</h1>
       <SnapshotView />
+      <TimelineSlider />
     </div>
   );
 };
