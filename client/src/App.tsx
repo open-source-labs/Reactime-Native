@@ -25,7 +25,7 @@ function App(): React.JSX.Element {
         console.log('data parsed from browser UI websockets connection:', data);
         setMessages((prev) => [...prev, data]); // if we simply push the new data to our state array, it won't trigger a re-render
       } catch {
-        console.log('unable to parse non-JSON data:', e.data, 'e', e);
+        console.log('unable to parse non-JSON data:', e.data, 'e',);
       }
     };
     ws.onerror = (e) => console.error('browser UI websockets error:', e);
@@ -33,7 +33,7 @@ function App(): React.JSX.Element {
   }, []);
 
   return (
-    <div>
+    <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', color: '#f1f5f9' }}>
       <MainContainer snapshotArray={messages} />
     </div>
   );

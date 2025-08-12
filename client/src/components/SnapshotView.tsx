@@ -19,7 +19,7 @@ const SnapshotView = ({ snapshotArray }): React.JSX.Element => {
 
   return (
     <div>
-      <h2>Snapshot Timeline</h2>
+      <h2 style={{ marginLeft: '3rem' }}>Snapshot Timeline</h2>
       {/* <ul>
         {snapshotArray.map((msgSnap, index) => (
           <li key={index}>
@@ -27,7 +27,7 @@ const SnapshotView = ({ snapshotArray }): React.JSX.Element => {
           </li>
         ))}
       </ul> */}
-      <ol start="0">
+      <ol>
         {snapshotArray.map((msgSnap, index) => (
           <li key={index}>
             <ToolTipDataDisplay data={JSON.stringify(msgSnap, null, 2)} />

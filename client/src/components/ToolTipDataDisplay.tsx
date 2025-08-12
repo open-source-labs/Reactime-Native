@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { JSONTree } from 'react-json-tree';
-// import '../styles/stateContainer.scss'
+import '../styles/stateContainer.scss'
 
 const ToolTipDataDisplay = ({ data }) => {
   console.log('data:', data);

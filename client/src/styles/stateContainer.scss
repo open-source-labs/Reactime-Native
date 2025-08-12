@@ -21,9 +21,16 @@
 }
 
 .tooltip-section {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border-color);
-  transition: background-color 150ms ease;
+  background: color-mix(in srgb, var(--bg-primary, #fff) 92%, var(--color-primary, #6066f2) 8%);
+  border: 1px solid color-mix(in srgb, var(--color-primary, #6066f2) 25%, black 0%);
+  border-radius: 10px;
+  padding: 10px 12px;
+  overflow: hidden;     /* keeps rounded corners around the JSONTree */
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+
+  &:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  }
 }
 
 .tooltip-section:last-child {
@@ -31,9 +38,9 @@
 }
 
 .tooltip-section-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-primary);
+  font-weight: 600;
+  color: var(--color-primary, #6066f2);
+  margin-bottom: 8px;
 }
 
 .tooltip-content {
@@ -52,10 +59,19 @@
   border-bottom: none;
 }
 
+/* Wrap the JSONTree so wide keys don’t break layout */
 .tooltip-data {
-  border-left: 2px solid var(--color-primary-dark);
+  /* remove vertical constraints so the card height follows expand/collapse */
+  overflow-y: visible;
+  overflow-x: auto;     /* allow horizontal scroll for very long lines */
+  border-left: 2px solid var(--color-primary-dark, #3c41c9);
+  padding-left: 10px;
 }
 
 .tooltip-container {
   animation: tooltipFade 150ms ease-out;
+  display: grid;
+  gap: 12px;          
+  padding: 8px;         
+  background: transparent;
 }
