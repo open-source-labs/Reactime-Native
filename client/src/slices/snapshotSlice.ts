@@ -4,6 +4,8 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 //separated createSlice from PayloadAction because of type distinction required for PayloadAction
 import { createSlice } from '@reduxjs/toolkit'; 
 
+// I think remove the "playing". And I'm not sure what the intervalID is
+
 //define shape of state for this slice
 export interface SnapshotState {
   snapshots: any[]; // should we type this more strictly?
@@ -24,6 +26,8 @@ const snapshotSlice = createSlice({
   initialState,
   reducers: {
     
+    // redux toolkit allows us to make these changes in a slice that seem like we're updating state that should be immutable
+    // but underneath the hood, redux toolkit just makes a copy of the state and returns it to us
     addSnapshot: (state, action: PayloadAction<any>) => { 
       state.snapshots.push(action.payload); //adds new snapshot to array in SnapshotState
       state.currentIndex = state.snapshots.length - 1; // updates currentIndex to most recent snapshot

@@ -10,7 +10,7 @@ import ToolTipDataDisplay from './ToolTipDataDisplay';
 const SnapshotView = ({ snapshotArray }): React.JSX.Element => {
   const snapshots = useSelector((state: RootState) => state.snapshot.snapshots);
   const currentIndex = useSelector((state: RootState) => state.snapshot.currentIndex);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch(); // will need to do useDispatch<AppDispatch>() if we use thunks (or a wrapper: useAppDispatch())
 
   // Pseudocode:
   // loop through snapshots and render buttons/timeline
@@ -38,6 +38,8 @@ const SnapshotView = ({ snapshotArray }): React.JSX.Element => {
         {snapshots.map((snap, index) => (
           <button
             key={index}
+             /* maybe we need some way of getting the proper index when jumping to the snapshot? 
+             Or else how do we know what snapshot to jump to on just an onClick()? */
             onClick={() => dispatch(jumpToSnapshot(index))}
             style={{
               backgroundColor: index === currentIndex ? 'skyblue' : 'lightgray',
