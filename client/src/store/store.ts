@@ -1,4 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
+
+//no need for reducers/main reducer b/c Redux Toolkit's createSlice handles that for us
 import snapshotReducer from '../slices/snapshotSlice'; //should I add .reducer to the end?
 
 //import more slices here later?
