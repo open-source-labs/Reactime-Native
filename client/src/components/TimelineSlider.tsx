@@ -24,24 +24,29 @@ const { Handle } = SliderWithHandle;
 const tooltipHandle: SliderProps['handleRender'] = (props) => {
   const { value, dragging, index, ...rest } = props as unknown as CustomHandleProps;
   return (
-    <Tooltip prefixCls='rc-slider-tooltip' overlay={value} visible={!!dragging} placement='top' key={index}>
+    <Tooltip
+      prefixCls="rc-slider-tooltip"
+      overlay={value}
+      visible={!!dragging}
+      placement="top"
+      key={index}
+    >
       <Handle value={value} {...rest} />
     </Tooltip>
   );
 };
 
 const TimelineSlider: React.FC = () => {
-  console.log('hello from timeline slider');
   const dispatch = useDispatch();
 
-  const snapshotsLength = useSelector((s: RootState) => s.snapshot.snapshots.length);
-  const currentIndex = useSelector((s: RootState) => s.snapshot.currentIndex);
-
-  console.log('snapshot length:', snapshotsLength);
-  console.log('current index', currentIndex);
+  const snapshotsLength = useSelector(
+    (s: RootState) => s.snapshot.snapshots.length
+  );
+  const currentIndex = useSelector(
+    (s: RootState) => s.snapshot.currentIndex
+  );
 
   if (snapshotsLength <= 0) return null;
-  console.log('hello do we get here')
 
   const handleSliderChange: SliderProps['onChange'] = (value) => {
     const nextIndex = Array.isArray(value) ? value[0] : value;
@@ -52,7 +57,6 @@ const TimelineSlider: React.FC = () => {
 
   return (
     <div style={{ padding: '8px 0' }}>
-      <p>hi</p>
       <Slider
         min={0}
         max={Math.max(0, snapshotsLength - 1)}
