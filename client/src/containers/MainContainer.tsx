@@ -5,8 +5,9 @@ import SnapshotView from '../components/SnapshotView';
 //import useSnapshotRecorder from '../hooks/useSnapshotRecorder';
 import TimelineSlider from '../components/TimelineSlider'
 
-const MainContainer = (): React.JSX.Element => {
+const MainContainer = ({snapshotArray}): React.JSX.Element => {
   const dispatch = useDispatch();
+  console.log('MainContainer render, snapshotArray:', snapshotArray);
   //const [fiberTree, setFiberTree] = useState<{ state: string } | null>(null); // can also use the following for more shape fleixbility: const [fiberTree, setFiberTree] = useState<any>(null);
 
   // 1. Connect to WebSocket here (future)
