@@ -12,12 +12,11 @@ import { jumpToSnapshot, pauseSnapshots } from '../slices/snapshotSlice'; //acti
 const TimelineSlider: React.FC = () => {
   const dispatch = useDispatch();
 
-
   //read values from redux store (slice key must be "snapshot" in store.ts)
-  const snapshotsLength = useSelector((s: RootState) => s.snapshot.snapshots.length); 
+  const snapshotsLength = useSelector((s: RootState) => s.snapshot.snapshots.length);
   const currentIndex = useSelector((s: RootState) => s.snapshot.currentIndex);
 
-  console.log("We're in timeline slider module.");
+  //   console.log("We're in timeline slider module.");
   console.log('Snapshots length:', snapshotsLength, 'Current index:', currentIndex);
 
   // While debugging, keep rendering even if length is 0
@@ -28,7 +27,7 @@ const TimelineSlider: React.FC = () => {
     const next = Array.isArray(value) ? value[0] : value;
     const clamped = Math.min(Math.max(0, next), safeMax);
     dispatch(jumpToSnapshot(clamped)); //update redux to current index
-    dispatch(pauseSnapshots()); //pause if user is scrubbing manually 
+    dispatch(pauseSnapshots()); //pause if user is scrubbing manually
   };
 
   return (
@@ -41,10 +40,10 @@ const TimelineSlider: React.FC = () => {
         /** The supported way to add a tooltip around the thumb */
         handleRender={(node, props) => (
           <Tooltip
-            prefixCls="rc-slider-tooltip"
+            prefixCls='rc-slider-tooltip'
             overlay={props.value as React.ReactNode}
             visible={!!props.dragging}
-            placement="top"
+            placement='top'
           >
             {/* `node` is the real internal handle; do not spread `key` manually */}
             {node}
