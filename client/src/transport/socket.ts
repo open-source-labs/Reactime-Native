@@ -3,6 +3,8 @@ import { createListenerMiddleware } from '@reduxjs/toolkit';
 import { addSnapshot } from '../slices/snapshotSlice';
 import { wsConnect, wsDisconnect, wsSend } from './wsActions';
 
+// TODO: figure out why state sometimes persists on websockets disconnect/connect and sometimes doesn't
+
 export const wsListener = createListenerMiddleware();
 
 const parseData = async (d: unknown) => {
