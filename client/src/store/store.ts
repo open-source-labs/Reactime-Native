@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, createAction } from '@reduxjs/toolkit';
 
 //no need for reducers/main reducer b/c Redux Toolkit's createSlice handles that for us
 import snapshotReducer from '../slices/snapshotSlice'; //should I add .reducer to the end?
@@ -23,7 +23,7 @@ export type RootState = ReturnType<typeof store.getState>; //export utility type
 
 export type AppDispatch = typeof store.dispatch; //export AppDispatch type used in async thunks or custom hooks (may not need this) -> a thunk handles async logic within a Redux app
 
-export const wsConnect = (url: string) => ({ type: 'ws/connect', payload: url } as const);
-export const wsDisconnect = () => ({ type: 'ws/disconnect' } as const);
-export const wsSend = (data: any) => ({ type: 'ws/send', payload: data } as const);
+export const wsConnect = createAction<string>('ws/connect');
+export const wsDisconnect = createAction('ws/disconnect');
+export const wsSend = createAction<unknown>('ws/send');
 export type WSActions = ReturnType<typeof wsConnect> | ReturnType<typeof wsDisconnect> | ReturnType<typeof wsSend>;

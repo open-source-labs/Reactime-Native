@@ -1,5 +1,5 @@
 import { createListenerMiddleware } from '@reduxjs/toolkit';
-import { addSnapshot, snapshotSlice } from '../slices/snapshotSlice';
+import { addSnapshot } from '../slices/snapshotSlice';
 import { wsConnect, wsDisconnect, wsSend } from '../store/store';
 
 const parseData = async (d: any) => {
@@ -17,6 +17,7 @@ let socket: WebSocket | null = null;
 wsListener.startListening({
   actionCreator: wsConnect,
   effect: async (action, api) => {
+    console.log('ws listener connected')
     // if already open, do nothing
     if (socket && socket.readyState === WebSocket.OPEN) return;
 
