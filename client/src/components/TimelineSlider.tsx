@@ -1,4 +1,5 @@
 import React from 'react';
+
 import Slider, { type SliderProps } from 'rc-slider'; //slider UI and its prop types
 import Tooltip from 'rc-tooltip'; //Tooltip bubble for the thumb
 import 'rc-slider/assets/index.css'; //required slider styles
