@@ -1,7 +1,7 @@
-// used to render UI and works in tandem with MainContainer (where logic, state, and context are managed)
+// used to render UI and works in tandem with App.tsx (where logic, state, and context are managed) 
 
 import React from 'react';
-import { useSelector, } from 'react-redux'; //may not need useDispatch if not dispatching actions 
+import { useSelector } from 'react-redux'; //may not need useDispatch if not dispatching actions
 // 'RootState' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
 import type { RootState } from '../store/store';
 //import { jumpToSnapshot } from '../slices/snapshotSlice'; //may not need this
@@ -16,7 +16,7 @@ const SnapshotView: React.FC = () => {
       <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>
         Total: {snapshots.length} | Index: {currentIndex}
       </div>
-      <pre style={{ background: '#fafafa', padding: 10, overflow: 'auto', maxHeight: 260 }}>
+      <pre style={{ background: 'navy', padding: 10, overflow: 'auto', maxHeight: 260 }}>
         {current ? JSON.stringify(current, null, 2) : 'No snapshot selected'}
       </pre>
     </div>
@@ -58,4 +58,3 @@ const SnapshotView = (): React.JSX.Element => {
 };
 
 */
-
