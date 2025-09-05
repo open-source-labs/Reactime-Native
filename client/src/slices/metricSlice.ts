@@ -13,14 +13,23 @@ export type LagMetric = {
     appId?: string; //optional appId if multiple RN apps are being profiled
 };
 
-interface MetricState { //shape of state for this slice
+export type FirstRenderMetric = {
+    ts: number,
+    firstRenderMs: number; //time in ms for first screen render
+    appId?: string; //optional appId if multiple RN apps are being profiled
+}
+
+interface MetricState { //shape of state for metrics in slice
     commits: CommitMetric[]; 
-    lags: LagMetric[];          
+    lags: LagMetric[];  
+    firstRenders: FirstRenderMetric[]; //
+
 }
 
 const initialState: MetricState = { //initial state for this slice
     commits: [],
     lags: [],
+    firstRenders: [],
 };
 
 const metricSlice = createSlice({ //create the reducer slice
@@ -33,6 +42,9 @@ const metricSlice = createSlice({ //create the reducer slice
         pushLagMetric: (state, action: PayloadAction<LagMetric>) => {
             state.lags.push(action.payload);
         },
+        pushFirstRenderMetric: (state, action: PayloadAction<FirstRenderMetric>) => {
+            state.firstRenders.push(action.payload);
+        },
         clearMetrics: (state) => {
             state.commits = [];
             state.lags = [];
@@ -40,7 +52,7 @@ const metricSlice = createSlice({ //create the reducer slice
     },
 });
 
-export const { pushCommitMetric, pushLagMetric, clearMetrics } = metricSlice.actions; //export actions to dispatch in
+export const { pushCommitMetric, pushLagMetric, clearMetrics, pushFirstRenderMetric } = metricSlice.actions; //export actions to dispatch in
 
 export default metricSlice.reducer; //export reducer to include in store 
 

@@ -12,8 +12,6 @@ export const wsSend       = createAction<unknown>('ws/send'); // payload is mess
 type SnapshotAdd = { channel: 'snapshot'; type: 'add'; payload: unknown }; // type payload more strictly?
 type SnapshotJump = { channel: 'snapshot'; type: 'jumpTo'; payload: { index: number } }; // jump to snapshot at index
 
-// NEW METRICS CHANNEL
-
 type CommitMetricMsg = { // shape of commit metric message from RN agent
   channel: 'metrics'; // channel name
   type: 'commit'; // message type
@@ -26,7 +24,7 @@ type LagMetricMsg = {
   payload: { ts: number; lagMs: number; appId?: string };
 };
 
-// NEW: first screen render (RN agent will send this once)
+// first screen render (RN agent will send this once)
 type FirstRenderMetricMsg = { 
   channel: 'metrics';
   type: 'firstRender';
@@ -109,7 +107,7 @@ wsListener.startListening({ // CONNECT
           }
           case 'control': {
             if (msg.type === 'pong') console.log('[ws] pong');
-            if (msg.type === 'error') console.warn('[ws] remote error:', (msg as any).payload);
+            if (msg.type === 'error') console.warn('[ws] remote error:', (msg.payload)); // (msg as any).payload caused TS error 
             break;
           }
         }
@@ -147,7 +145,7 @@ wsListener.startListening({ // CONNECT
 wsListener.startListening({
   actionCreator: wsDisconnect,
   effect: () => { // no need for async here because not waiting for close to complete
-    if (!socket) return; 
+    if (!socket) return; // 
     closedByUser = true; 
     console.log('[ws] manual DISCONNECT (state:', socket.readyState, ')');
     if (socket.readyState === WebSocket.OPEN) socket.close();
@@ -157,8 +155,8 @@ wsListener.startListening({
 // SEND
 wsListener.startListening({
   actionCreator: wsSend,
-  effect: (action) => {
-    if (socket?.readyState === WebSocket.OPEN) {
+  effect: (action) => { 
+    if (socket?.readyState === WebSocket.OPEN) { // only send if open
       socket.send(JSON.stringify(action.payload));
     } else {
       console.log('[ws] SEND skipped (not open)');
