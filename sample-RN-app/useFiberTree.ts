@@ -120,6 +120,29 @@ const fiberTagMap: Record<number, string> = {
 export function traverse(fiber: any) {
   if (!fiber) return;
 
+  const {
+    sibling,
+    stateNode,
+    child,
+    memoizedState,
+    memoizedProps,
+    elementType,
+    key,
+    tag,
+    actualDuration,
+    actualStartTime,
+    selfBaseDuration,
+    treeBaseDuration,
+  } = fiber;
+
+  // ok looks like our Fiber nodes have everything that Reactime's does
+  // console.log('sibling:', sibling);
+  // console.log('child:', child);
+  // console.log('actualDuration:', actualDuration);
+  // console.log('actualStartTime:', actualStartTime);
+  // console.log('selfBaseDuration:', selfBaseDuration);
+  // console.log('treeBaseDuration:', treeBaseDuration);
+
   const typeName = fiber.type?.name ?? fiber.elementType?.name ?? fiber.type?.displayName ?? 'Unknown';
   const tagName = fiberTagMap[fiber.tag] ?? `UnknownTag(${fiber.tag})`;
   let memoizedStateKeys;
