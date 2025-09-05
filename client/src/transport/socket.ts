@@ -1,116 +1,76 @@
-//  only import *type* to satisfy tsconfig's `verbatimModuleSyntax`
-import type { AppDispatch } from '../store/store';
-
-// import just actions WebSocket messages will map to and hence need to dispatch
+// client/src/transport/socket.ts
+import { createAction, createListenerMiddleware } from '@reduxjs/toolkit';
 import { addSnapshot, jumpToSnapshot } from '../slices/snapshotSlice';
-import { pushCommitMetric, pushLagMetric } from '../slices/metricSlice';
+import { pushCommitMetric, pushLagMetric, pushFirstRenderMetric } from '../slices/metricSlice';
 
-// typed wrapper for every anticipated WS message
-type Envelope =
-  | { channel: 'snapshot'; type: 'add';    payload: unknown }
-  | { channel: 'snapshot'; type: 'jumpTo'; payload: { index: number } }
-  | { channel: 'metrics';  type: 'commit'; payload: { ts: number; durationMs: number; fibersUpdated?: number } }
-  | { channel: 'metrics';  type: 'lag';    payload: { ts: number; lagMs: number } }
-  | { channel: 'control';  type: 'ping' | 'pong' | 'error'; payload?: unknown };
+//  WS command actions (UI or app code can dispatch these)
+export const wsConnect    = createAction<string | undefined>('ws/connect');     // optional URL
+export const wsDisconnect = createAction('ws/disconnect'); // no payload
+export const wsSend       = createAction<unknown>('ws/send'); // payload is message object to send
 
-// initSocket creates and configures ws connection to given URL (or default)
-// and sets up event handlers to dispatch Redux actions based on incoming messages.
-const { pushCommit, pushLag } = { pushCommit: pushCommitMetric, pushLag: pushLagMetric }; //alias to match Envelope
-export function initSocket(dispatch: AppDispatch, url = defaultWsUrl()) { 
-  const ws = new WebSocket(url); // create ws connection
+// Incoming WS message envelope schema (from RN agent)
+type SnapshotAdd = { channel: 'snapshot'; type: 'add'; payload: unknown }; // type payload more strictly?
+type SnapshotJump = { channel: 'snapshot'; type: 'jumpTo'; payload: { index: number } }; // jump to snapshot at index
 
-  // on open, send ping for diagnostics
-  ws.addEventListener('open', () => {
-    console.log('[WS] open', url);
-    ws.send(JSON.stringify({ channel: 'control', type: 'ping' }));
-  });
+// NEW METRICS CHANNEL
 
-  // on message, parse JSON
-  ws.addEventListener('message', (evt) => { 
-    const text = typeof evt.data === 'string' ? evt.data : ''; // expect text messages only
-    if (!text) { 
-      console.warn('[WS] non-text message ignored:', evt.data);
-      return;
-    }
-    let msg: Envelope | null = null; 
-    try { 
-      msg = JSON.parse(text) as Envelope; // // try to parse JSON into Envelope
-    } catch {
-      console.warn('[WS] non-JSON message ignored:', evt.data);
-      return;
-    }
-
-    // route by channel/type to dispatch right Redux action
-    switch (msg.channel) {
-      case 'snapshot': { 
-        if (msg.type === 'add') dispatch(addSnapshot(msg.payload));
-        else if (msg.type === 'jumpTo') dispatch(jumpToSnapshot(msg.payload.index));
-        break;
-      }
-      case 'metrics': {
-        if (msg.type === 'commit') dispatch(pushCommit(msg.payload));
-        else if (msg.type === 'lag') dispatch(pushLag(msg.payload));
-        break;
-      }
-      case 'control': {
-        if (msg.type === 'pong') console.log('[WS] pong');
-        if (msg.type === 'error') console.warn('[WS] remote error:', msg.payload);
-        break;
-      }
-      default: {
-        // Exhaustiveness guard: if new union member added but forget to handle it, TS complains
-        const _exhaustive: never = msg;
-        return _exhaustive;
-      }
-    }
-  });
-
-  // close/error handlers for diagnostics (and future reconnection logic)
-  ws.addEventListener('close', (evt) => {
-    console.log('[WS] closed', evt.code, evt.reason);
-  });
-
-  ws.addEventListener('error', (err) => {
-    console.error('[WS] error', err);
-  });
-
-  // return ws so callers can send messages or close it later
-  return ws;
-}
-
-// build default URL based on current page (ws://… or wss://…)
-function defaultWsUrl() {
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  const host = location.hostname;
-  const port = 8080;
-  return `${proto}://${host}:${port}`;
-}
-// transport/socket.ts
-import { createListenerMiddleware } from '@reduxjs/toolkit';
-import { addSnapshot } from '../slices/snapshotSlice';
-import { wsConnect, wsDisconnect, wsSend } from './wsActions';
-
-// TODO: figure out why state sometimes persists on websockets disconnect/connect and sometimes doesn't
-
-export const wsListener = createListenerMiddleware();
-
-const parseData = async (d: unknown) => {
-  if (typeof d === 'string') return JSON.parse(d);
-  if (d instanceof Blob) return JSON.parse(await d.text());
-  if (d instanceof ArrayBuffer) return JSON.parse(new TextDecoder().decode(d));
-  throw new Error('Unknown WS data type');
+type CommitMetricMsg = { // shape of commit metric message from RN agent
+  channel: 'metrics'; // channel name
+  type: 'commit'; // message type
+  payload: { ts: number; durationMs: number; fibersUpdated?: number; appId?: string }; // message payload
 };
 
-let socket: WebSocket | null = null;
-let closedByUser = false;
+type LagMetricMsg = {
+  channel: 'metrics';
+  type: 'lag';
+  payload: { ts: number; lagMs: number; appId?: string };
+};
 
-// OPEN on ws/connect
-wsListener.startListening({
-  actionCreator: wsConnect,
-  effect: async (action, api) => {
-    const url = action.payload;
+// NEW: first screen render (RN agent will send this once)
+type FirstRenderMetricMsg = { 
+  channel: 'metrics';
+  type: 'firstRender';
+  payload: { ts: number; firstRenderMs: number; appId?: string };
+};
 
-    // prevent duplicate connects (StrictMode, remounts, etc.)
+type ControlMsg = // control channel for pings, errors, etc.
+  | { channel: 'control'; type: 'ping' } // optional health ping from RN agent
+  | { channel: 'control'; type: 'pong' } // optional pong response
+  | { channel: 'control'; type: 'error'; payload?: unknown }; // error message (payload may be anything)
+
+type Envelope = // union of all message types
+  | SnapshotAdd
+  | SnapshotJump
+  | CommitMetricMsg
+  | LagMetricMsg
+  | FirstRenderMetricMsg
+  | ControlMsg;
+
+
+const parseData = async (d: unknown) => { // parse incoming WS data (string, Blob, ArrayBuffer) to JSON
+  if (typeof d === 'string') return JSON.parse(d); // most common case
+  if (d instanceof Blob) return JSON.parse(await d.text()); // unlikely with React Native, but just in case
+  if (d instanceof ArrayBuffer) return JSON.parse(new TextDecoder().decode(d)); // also unlikely
+  throw new Error('Unknown WS data type'); // shouldn't happen
+};
+
+const defaultWsUrl = () => { // default WS URL based on current location
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws'; // secure if page is secure
+  return `${proto}://${location.hostname}:8080`; // default port 8080
+};
+
+export const wsListener = createListenerMiddleware(); // create the listener middleware instance
+
+let socket: WebSocket | null = null; // track current socket instance
+let closedByUser = false; // track if close was user-initiated (vs. unexpected) 
+
+
+wsListener.startListening({ // CONNECT
+  actionCreator: wsConnect, // when this action is dispatched, run the effect
+  effect: async (action, api) => { // effect is async to allow waiting for socket close
+    const url = action.payload || defaultWsUrl(); //
+
+    // Avoid duplicates (StrictMode double-invoke, remounts, etc.)
     if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
       console.log('[ws] already connecting/open');
       return;
@@ -122,26 +82,45 @@ wsListener.startListening({
 
     socket.onopen = () => {
       console.log('[ws] OPEN', url);
-      if (closedByUser) {
-        console.log('[ws] closing immediately after OPEN (disconnect requested during CONNECTING)');
-        socket?.close();
-      }
+      // optional health ping
+      socket?.send(JSON.stringify({ channel: 'control', type: 'ping' }));
+      if (closedByUser) socket?.close(); // if a disconnect was requested during CONNECTING
     };
 
-    socket.onerror = (e) => console.log('[ws] ERROR', e);
+    socket.onerror = (e) => console.log('[ws] ERROR', e); // close event will follow
 
-    const onMessage = async (e: MessageEvent) => {
+    // Handle incoming messages
+    // Note: messages may arrive before onopen completes, so this must be set before that
+    const onMessage = async (e: MessageEvent) => { 
       try {
-        const snap = await parseData(e.data);
-        console.log('[ws] <-', snap);
-        api.dispatch(addSnapshot(snap));
+        const msg = (await parseData(e.data)) as Envelope;
+        // Route by channel/type
+        switch (msg.channel) {
+          case 'snapshot': {
+            if (msg.type === 'add') api.dispatch(addSnapshot(msg.payload));
+            if (msg.type === 'jumpTo') api.dispatch(jumpToSnapshot(msg.payload.index));
+            break;
+          }
+          case 'metrics': {
+            if (msg.type === 'commit') api.dispatch(pushCommitMetric(msg.payload));
+            if (msg.type === 'lag') api.dispatch(pushLagMetric(msg.payload));
+            if (msg.type === 'firstRender') api.dispatch(pushFirstRenderMetric(msg.payload));
+            break;
+          }
+          case 'control': {
+            if (msg.type === 'pong') console.log('[ws] pong');
+            if (msg.type === 'error') console.warn('[ws] remote error:', (msg as any).payload);
+            break;
+          }
+        }
       } catch (err) {
         console.error('[ws] parse error:', err);
       }
     };
+
     socket.addEventListener('message', onMessage);
 
-    // Wait until either the socket closes OR this listener is aborted
+    // Wait until socket closes OR this listener is aborted
     await new Promise<void>((resolve) => {
       const onClose = (e: CloseEvent) => {
         console.log('[ws] CLOSE', e.code, e.reason || '', closedByUser ? '(by user)' : '(unexpected)');
@@ -151,36 +130,38 @@ wsListener.startListening({
       };
       socket!.addEventListener('close', onClose);
 
-      const onAbort = () => {
-        closedByUser = true;
-        // If still CONNECTING, let onopen close it; otherwise close now.
-        if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.close();
-        }
-        // If CONNECTING, we’ll close in onopen; in both cases, resolve after close fires.
-      };
-      api.signal.addEventListener('abort', onAbort, { once: true });
+      api.signal.addEventListener(
+        'abort',
+        () => {
+          closedByUser = true;
+          if (socket?.readyState === WebSocket.OPEN) socket.close();
+          // if CONNECTING, onopen will close immediately
+        },
+        { once: true }
+      );
     });
   },
 });
 
-// CLOSE on ws/disconnect
+// DISCONNECT
 wsListener.startListening({
   actionCreator: wsDisconnect,
-  effect: () => {
-    if (!socket) return;
-    closedByUser = true;
+  effect: () => { // no need for async here because not waiting for close to complete
+    if (!socket) return; 
+    closedByUser = true; 
     console.log('[ws] manual DISCONNECT (state:', socket.readyState, ')');
     if (socket.readyState === WebSocket.OPEN) socket.close();
-    // If CONNECTING, we let onopen immediately close it.
   },
 });
 
 // SEND
 wsListener.startListening({
   actionCreator: wsSend,
-  effect: async (action) => {
-    if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(action.payload));
-    else console.log('[ws] SEND skipped (not open)');
+  effect: (action) => {
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(action.payload));
+    } else {
+      console.log('[ws] SEND skipped (not open)');
+    }
   },
 });
