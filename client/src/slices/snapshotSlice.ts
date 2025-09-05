@@ -58,6 +58,7 @@ const snapshotSlice = createSlice({
   },
 });
 
+//console.log('snapshotSlice loaded', snapshotSlice);
 export const {
   addSnapshot,
   jumpToSnapshot,
