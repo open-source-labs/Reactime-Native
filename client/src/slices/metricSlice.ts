@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export type CommitMetric = {
     ts: number; //timestamp in ms from RN device
-    duration: number; //duration in ms of commit
+    durationMs: number; //duration in ms of commit
     fibersUpdated?: number; //optinal number of fibers updated during commit
     appId?: string; //optional appId if multiple RN apps are being profiled
 };
