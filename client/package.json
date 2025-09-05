@@ -17,7 +17,9 @@
     "rc-tooltip": "^6.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "tooltip": "^1.6.1"
+    "tooltip": "^1.6.1",
+    "react-json-tree": "^0.20.0",
+    "sass": "^1.90.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

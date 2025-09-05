@@ -9,7 +9,7 @@ import { logFiber, traverse } from './useFiberTree';
 //   Constants.manifest?.debuggerHost?.split(':')[0] || // older SDK
 //   'localhost'; // fallback
 
-const devHost = '10.0.0.157'; // Will's IP since the above code wasn't working
+const devHost = '10.0.0.157'; // Will's laptop IP since the above code wasn't working
 
 export default function App() {
   const [count, setCount] = useState(0);
@@ -24,7 +24,13 @@ export default function App() {
 
     socket.onopen = () => {
       console.log('🔌 WS connected');
-      socket.send(JSON.stringify({ type: 'hello', platform: 'expo' }));
+      socket.send(
+        JSON.stringify({
+          count: count,
+          letter: letter,
+          timestamp: new Date().toISOString(),
+        })
+      );
     };
     socket.onerror = (e) => {
       console.log('WS error', (e as any).message ?? e);
