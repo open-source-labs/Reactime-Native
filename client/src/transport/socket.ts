@@ -58,14 +58,14 @@ export function initSocket(dispatch: AppDispatch, url = defaultWsUrl()) {
         break;
       }
       default: {
-        // 8) Exhaustiveness guard: if we add a new union member and forget to handle it, TS complains
+        // Exhaustiveness guard: if new union member added but forget to handle it, TS complains
         const _exhaustive: never = msg;
         return _exhaustive;
       }
     }
   });
 
-  // 9) Close/error handlers for diagnostics (and future reconnection logic)
+  // close/error handlers for diagnostics (and future reconnection logic)
   ws.addEventListener('close', (evt) => {
     console.log('[WS] closed', evt.code, evt.reason);
   });
@@ -74,11 +74,11 @@ export function initSocket(dispatch: AppDispatch, url = defaultWsUrl()) {
     console.error('[WS] error', err);
   });
 
-  // 10) Return the ws so callers can send messages or close it later
+  // return ws so callers can send messages or close it later
   return ws;
 }
 
-// 11) Build a sensible default URL based on current page (ws://… or wss://…)
+// build default URL based on current page (ws://… or wss://…)
 function defaultWsUrl() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   const host = location.hostname;

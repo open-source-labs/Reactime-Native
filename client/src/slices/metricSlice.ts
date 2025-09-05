@@ -9,7 +9,7 @@ export type CommitMetric = {
 
 export type LagMetric = {
     ts: number; //timestamp in ms from RN device
-    lagMs: number; //lag in ms aka event loop stall measured on RN device
+    lagMs: number; //lag in ms aka event loop stall measured on RN device - will's Q: how would RN app provide duration and lag in ms?
     appId?: string; //optional appId if multiple RN apps are being profiled
 };
 
