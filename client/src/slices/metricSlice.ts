@@ -1,0 +1,46 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+export type CommitMetric = {
+    ts: number; //timestamp in ms from RN device
+    duration: number; //duration in ms of commit
+    fibersUpdated?: number; //optinal number of fibers updated during commit
+    appId?: string; //optional appId if multiple RN apps are being profiled
+};
+
+export type LagMetric = {
+    ts: number; //timestamp in ms from RN device
+    lagMs: number; //lag in ms aka event loop stall measured on RN device
+    appId?: string; //optional appId if multiple RN apps are being profiled
+};
+
+interface MetricState { //shape of state for this slice
+    commits: CommitMetric[]; 
+    lags: LagMetric[];          
+}
+
+const initialState: MetricState = { //initial state for this slice
+    commits: [],
+    lags: [],
+};
+
+const metricSlice = createSlice({ //create the reducer slice
+    name: 'metric', //name of slice
+    initialState, //initial state
+    reducers: { //pure functions to update state
+        pushCommitMetric: (state, action: PayloadAction<CommitMetric>) => {
+            state.commits.push(action.payload);
+        },
+        pushLagMetric: (state, action: PayloadAction<LagMetric>) => {
+            state.lags.push(action.payload);
+        },
+        clearMetrics: (state) => {
+            state.commits = [];
+            state.lags = [];
+        },
+    },
+});
+
+export const { pushCommitMetric, pushLagMetric, clearMetrics } = metricSlice.actions; //export actions to dispatch in
+
+export default metricSlice.reducer; //export reducer to include in store 
+
