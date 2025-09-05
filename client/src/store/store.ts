@@ -2,14 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 
 //no need for reducers/main reducer b/c Redux Toolkit's createSlice handles that for us
 import snapshotReducer from '../slices/snapshotSlice'; //should I add .reducer to the end?
-
-//import more slices here later?
-
+import metricReducer from '../slices/metricSlice';
 
 export const store = configureStore ({ //export store
     reducer: {
-        snapshot: snapshotReducer, //should this be snapshotSlice.reducer?
+        snapshot: snapshotReducer, //should this be snapshotSlice.reducer? NO b/c default export in snapshotSlice.ts is the reducer
+        metric: metricReducer,
     },
+        
     middleware: (getDefaultMiddleware) => //Redux Toolkit's default middleware to customize
         getDefaultMiddleware({
             serializableCheck: false, //prevent warnings & errors for complex non-serializable data like Fiber Tree and snapshots
