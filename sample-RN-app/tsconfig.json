@@ -1,0 +1,9 @@
+// {
+//   "compilerOptions": {},
+//   "extends": "expo/tsconfig.base"
+// }
+
+{
+  "compilerOptions": {},
+  "extends": "./node_modules/expo/tsconfig.base"
+}

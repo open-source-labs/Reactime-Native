@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": { // do i need this?
+    "types": ["vitest", "node"],
+    "jsx": "react-jsx", // or "react-jsxdev" for development  
+  },
+}
