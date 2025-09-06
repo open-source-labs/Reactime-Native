@@ -21,6 +21,7 @@ export default function updateAndSendSnapShotTree(fiberRoot: FiberRoot): void {
   /** The snapshot of the current ReactFiber tree */
   const payload = createTree(current);
   // Save the current window url to route
+  // PATCH: need to change the route. (GPT suggestion: React Navigation)
   payload.route = routes.addRoute(window.location.href);
   // method safely enables cross-origin communication between Window objects;
   // e.g., between a page and a pop-up that it spawned, or between a page
@@ -30,6 +31,7 @@ export default function updateAndSendSnapShotTree(fiberRoot: FiberRoot): void {
   // this will fire off everytime there is a change in test application
   // convert the payload from a fiber tree to an object to avoid a data clone error when postMessage processes the argument
   const obj = JSON.parse(JSON.stringify(payload));
+  // PATCH: send over websockets
   window.postMessage(
     {
       action: 'recordSnap',

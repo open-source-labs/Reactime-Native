@@ -12,8 +12,11 @@ import { logFiber, traverse } from './useFiberTree';
 const devHost = '10.0.0.157'; // Will's laptop IP since the above code wasn't working
 
 export default function App() {
-  // TODO: figure out how to store the actual Fiber tree here, and send it over websockets in emit()
-
+  // PATCH: figure out how to store the actual Fiber tree here, and send it over websockets in emit()
+  // I think store a tree here in state. though should I store it already in JSON, or JSONify it here?
+  // and how do we actually store the tree?
+  // unless maybe push the nodes onto the JSON and somehow format at each push
+  // i'm concerned about preserving the proper child/sibling relationships in the JSON
   const [count, setCount] = useState(0);
   const [letter, setLetter] = useState('a');
 

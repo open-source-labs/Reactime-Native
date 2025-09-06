@@ -77,12 +77,13 @@ export default function linkFiber(mode: Status): () => Promise<void> {
     // If React Devtools is not installed, object will be undefined.
     if (!devTools) return;
     // If React Devtools is installed, send a message to front end.
+    // PATCH: need to send with websockets, but maybe this isn't needed?
     window.postMessage(
       {
         action: 'devToolsInstalled',
         payload: 'devToolsInstalled',
       },
-      '*',
+      '*'
     );
 
     // --------------------CHECK VALID REACT APPLICATION------------------------
@@ -93,18 +94,20 @@ export default function linkFiber(mode: Status): () => Promise<void> {
       return;
     }
     // If target application is a React App, send a message to front end.
+    // PATCH: need to send with websockets, but maybe this isn't needed?
     window.postMessage(
       {
         action: 'aReactApp',
         payload: 'aReactApp',
       },
-      '*',
+      '*'
     );
     // --------------INITIATE EVENT LISTENER FOR VISIBILITY CHANGE--------------
     /**
      * Initiate an event listener for when there is a change to the visibility of the react target application (the browser tab)
      * @example If tic-tac-toe demo app is loaded on a tab with localhost:8080, whenever user switch tab or switch to another software => 'visibilityChange' => invoke the callback to update doWork boolean value
      */
+    // PATCH: I think this one doesn't apply to us. sounds like it's for visibility of the app, not the debug UI. Maybe we can do something similar if the phone app that's pulled up is switched
     document.addEventListener('visibilitychange', () => {
       // Hidden property = background tab/minimized window
       isVisible = !document.hidden;
