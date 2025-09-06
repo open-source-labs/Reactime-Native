@@ -6,6 +6,11 @@ import { useSelector } from 'react-redux'; //may not need useDispatch if not dis
 import type { RootState } from '../store/store';
 //import { jumpToSnapshot } from '../slices/snapshotSlice'; //may not need this
 
+export interface SnapshotViewProps {
+  snapshot: unknown;
+  index: number;
+  total: number;
+}
 const SnapshotView: React.FC = () => {
   const { snapshots, currentIndex } = useSelector((s: RootState) => s.snapshot);
   const current = snapshots[currentIndex];

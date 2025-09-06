@@ -42,7 +42,7 @@ const metricSlice = createSlice({ //create the reducer slice
         pushLagMetric: (state, action: PayloadAction<LagMetric>) => {
             state.lags.push(action.payload);
         },
-        pushFirstRenderMetric: (state, action: PayloadAction<FirstRenderMetric>) => {
+        pushFirstRenderMetric: (state, action: PayloadAction<FirstRenderMetric>) => { // sent only once per app launch
             state.firstRenders.push(action.payload);
         },
         clearMetrics: (state) => {
@@ -52,7 +52,7 @@ const metricSlice = createSlice({ //create the reducer slice
     },
 });
 
-export const { pushCommitMetric, pushLagMetric, clearMetrics, pushFirstRenderMetric } = metricSlice.actions; //export actions to dispatch in
+export const { pushCommitMetric, pushLagMetric, pushFirstRenderMetric, clearMetrics  } = metricSlice.actions; // 
 
 export default metricSlice.reducer; //export reducer to include in store 
 

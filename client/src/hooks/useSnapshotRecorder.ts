@@ -3,7 +3,9 @@ import { useDispatch } from 'react-redux';
 //import { addSnapshot } from '../slices/snapshotSlice';
 //import deepClone from '../utils/deepClone'; // optional, if needed
 
-const useSnapshotRecorder = (fiberTree: any): void => {
+// Jam disabled below. 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const useSnapshotRecorder = (fiberTree: any): void => { // could type more strictly if desired
   const dispatch = useDispatch();
 
   useEffect(() => {
