@@ -9,7 +9,7 @@ import { logFiber, traverse } from './useFiberTree';
 //   Constants.manifest?.debuggerHost?.split(':')[0] || // older SDK
 //   'localhost'; // fallback
 
-const devHost = '192.168.1.67'; // Will's laptop IP since the above code wasn't working
+const devHost = '192.168.1.67'; // 
 
 export default function App() {
   const [count, setCount] = useState(0);

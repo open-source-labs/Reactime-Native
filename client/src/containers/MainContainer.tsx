@@ -13,6 +13,10 @@ const MainContainer: React.FC = () => {
   //Derive current snapshot (guard against empty arrays)
   const current = snapshots[currentIndex] ?? null;
 
+  console.log('📦 snapshots:', snapshots);
+console.log('📍 currentIndex:', currentIndex);
+console.log('📸 current:', current);
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16, height: '100vh' }}>
       <aside style={{ padding: 12, borderRight: '1px solid #eee' }}>

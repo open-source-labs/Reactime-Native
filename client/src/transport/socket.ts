@@ -90,9 +90,10 @@ wsListener.startListening({ // CONNECT
     // Handle incoming messages
     // Note: messages may arrive before onopen completes, so this must be set before that
     const onMessage = async (e: MessageEvent) => { 
-        
+        console.log( 'e data:', e.data, e);
       try {
         const msg = (await parseData(e.data)) as Envelope;
+        
         // Route by channel/type
         switch (msg.channel) {
           case 'snapshot': {

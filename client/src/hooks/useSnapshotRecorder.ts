@@ -8,6 +8,8 @@ import { useDispatch } from 'react-redux';
 const useSnapshotRecorder = (fiberTree: any): void => { // could type more strictly if desired
   const dispatch = useDispatch();
 
+console.log('Recording snapshot:', fiberTree);
+
   useEffect(() => {
     if (fiberTree) {
       // Pseudocode:
