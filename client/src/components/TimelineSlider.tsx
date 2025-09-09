@@ -20,7 +20,7 @@ const TimelineSlider: React.FC = () => {
   //   console.log("We're in timeline slider module.");
   console.log('Snapshots length:', snapshotsLength, 'Current index:', currentIndex);
 
-  // While debugging, keep rendering even if length is 0
+  // CHANGED: Render even if length is 0 for debugging, but show empty state
   const safeMax = Math.max(0, snapshotsLength - 1); //if no snaps, max = 0
   const safeValue = Math.min(Math.max(0, currentIndex), safeMax);
 
@@ -30,6 +30,17 @@ const TimelineSlider: React.FC = () => {
     dispatch(jumpToSnapshot(clamped)); //update redux to current index
     dispatch(pauseSnapshots()); //pause if user is scrubbing manually
   };
+
+  // ADDED: Show empty state message when no snapshots available
+  if (snapshotsLength === 0) {
+    return (
+      <div style={{ padding: '8px 0', maxWidth: 640 }}>
+        <p style={{ fontSize: 12, color: '#666', fontStyle: 'italic' }}>
+          No snapshots available. Send test data or connect React Native app.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '8px 0', maxWidth: 640 }}>
