@@ -30,7 +30,7 @@ const ConnectionDebugger: React.FC = () => {
     dispatch(wsSend(testSnapshot));
   };
 
-  const sendTestMetric = () => {
+  const sendTestCommitMetric = () => {
     const testMetric = {
       channel: 'metrics',
       type: 'commit',
@@ -45,6 +45,33 @@ const ConnectionDebugger: React.FC = () => {
     console.log('📊 Sending test metric:', testMetric);
     dispatch(wsSend(testMetric));
   };
+
+//added next two to generate different types of metrics for testing
+const sendTestLagMetric = () => {
+  const testMetric = {
+    channel: 'metrics',
+    type: 'lag',  // Different type
+    payload: {
+      ts: Date.now(),
+      lagMs: Math.random() * 100 + 5,
+      appId: 'debug-test'
+    }
+  };
+  dispatch(wsSend(testMetric));
+};
+
+const sendTestFirstRenderMetric = () => {
+  const testMetric = {
+    channel: 'metrics',
+    type: 'firstRender',  // Different type
+    payload: {
+      ts: Date.now(),
+      firstRenderMs: Math.random() * 2000 + 500,
+      appId: 'debug-test'
+    }
+  };
+  dispatch(wsSend(testMetric));
+};
 
   return (
     <div style={{ 
@@ -88,10 +115,11 @@ const ConnectionDebugger: React.FC = () => {
       </button>
       
       <button 
-        onClick={sendTestMetric}
+        onClick={sendTestCommitMetric}
         style={{ 
           display: 'block', 
           width: '100%', 
+          marginBottom: 4, 
           padding: 4,
           fontSize: 10,
           background: '#10b981',
@@ -101,8 +129,44 @@ const ConnectionDebugger: React.FC = () => {
           cursor: 'pointer'
         }}
       >
-        📊 Send Test Metric
+        📊 Send Test Commit Metric
       </button>
+
+      <button 
+        onClick={sendTestLagMetric}
+        style={{ 
+          display: 'block', 
+          width: '100%', 
+          marginBottom: 4,
+          padding: 4,
+          fontSize: 10,
+          background: '#f59e0b ',
+          color: 'white',
+          border: 'none',
+          borderRadius: 4,
+          cursor: 'pointer'
+        }}
+      >
+        ⏱️ Send Test Lag Metric
+      </button>
+
+      <button 
+        onClick={sendTestFirstRenderMetric}
+        style={{ 
+          display: 'block', 
+          width: '100%', 
+          marginBottom: 4,
+          padding: 4,
+          fontSize: 10,
+          background: '#8b5cf6',
+          color: 'white',
+          border: 'none',
+          borderRadius: 4,
+          cursor: 'pointer'
+        }}
+      >
+        🚀 Send Test First Render Metric
+      </button>   
     </div>
   );
 };
