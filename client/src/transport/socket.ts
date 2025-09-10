@@ -124,6 +124,8 @@ wsListener.startListening({ // CONNECT
     await new Promise<void>((resolve) => {
       const onClose = (e: CloseEvent) => {
         console.log('[ws] CLOSE', e.code, e.reason || '', closedByUser ? '(by user)' : '(unexpected)');
+  console.log('[ws] Close event details:', { code: e.code, reason: e.reason, wasClean: e.wasClean });
+        console.log('[ws] CLOSE', e.code, e.reason || '', closedByUser ? '(by user)' : '(unexpected)');
         socket?.removeEventListener('message', onMessage);
         socket = null;
         resolve();
@@ -158,10 +160,21 @@ wsListener.startListening({
 wsListener.startListening({
   actionCreator: wsSend,
   effect: (action) => { 
+    console.log('🚀 Attempting to send:', action.payload); // Add this line
+    console.log('📡 Socket state check:', {
+      socketExists: !!socket,
+      readyState: socket?.readyState,
+      readyStateText: socket?.readyState === 0 ? 'CONNECTING' : 
+                     socket?.readyState === 1 ? 'OPEN' : 
+                     socket?.readyState === 2 ? 'CLOSING' : 
+                     socket?.readyState === 3 ? 'CLOSED' : 'UNKNOWN'
+    });
+    
     if (socket?.readyState === WebSocket.OPEN) { // only send if open
       socket.send(JSON.stringify(action.payload));
+      console.log('✅ Message sent successfully'); // Add this line
     } else {
-      console.log('[ws] SEND skipped (not open)');
+      console.log('[ws] SEND skipped (not open), readyState:', socket?.readyState); // Update this line
     }
   },
 });
