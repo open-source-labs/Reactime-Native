@@ -6,6 +6,7 @@ import { wsSend } from '../transport/socket';
 import SnapshotView from '../components/SnapshotView';
 import TimelineSlider from '../components/TimelineSlider';
 import MetricsPanel from '../components/MetricsPanel';
+//import SimpleHeader from '../components/SimpleHeader'; this needs styling and .svg
 
 // Inline debug component (can move to separate file later)
 const ConnectionDebugger: React.FC = () => {
@@ -196,7 +197,7 @@ const MainContainer: React.FC = () => {
 
         <main style={{ display: 'grid', gridTemplateRows: '1fr auto', gap: 16 }}>
           <section style={{ padding: 12, overflow: 'auto', borderBottom: '1px solid #eee' }}>
-            <h3 style={{ margin: '8px 0 12px' }}>Snapshot View</h3>
+            {/* <h3 style={{ margin: '8px 0 12px' }}>Snapshot View</h3> This is a duplicate */}
 
             {/* Pass plain props to presentational component */}
             <SnapshotView
@@ -207,7 +208,7 @@ const MainContainer: React.FC = () => {
           </section>
 
           <section style={{ padding: 12 }}>
-            <h3 style={{ margin: '8px 0 12px' }}>Performance Metrics</h3>
+            {/* <h3 style={{ margin: '8px 0 12px' }}></h3> Performance Metrics here is a duplicate */}
             <MetricsPanel />
           </section>
         </main>

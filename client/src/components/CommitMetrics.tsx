@@ -38,23 +38,23 @@ const CommitMetrics: React.FC = () => {
 
       <table style={tableStyle}>
         <thead>
-          <tr>
-            <th>When</th>
-            <th>Duration (ms)</th>
-            <th>Fibers</th>
-            <th>App</th>
-          </tr>
-        </thead>
-        <tbody>
-          {commits.slice(-20).reverse().map((c, i) => (
-            <tr key={i}>
-              <td>{formatTime(c.ts)}</td>
-              <td>{c.durationMs.toFixed(1)}</td>
-              <td>{c.fibersUpdated ?? '—'}</td>
-              <td>{c.appId ?? '—'}</td>
-            </tr>
-          ))}
-        </tbody>
+  <tr>
+    <th style={thStyle}>When</th>
+    <th style={thStyle}>Duration (ms)</th>
+    <th style={thStyle}>Fibers</th>
+    <th style={thStyle}>App</th>
+  </tr>
+</thead>
+<tbody>
+  {commits.slice(-20).reverse().map((c, i) => (
+    <tr key={i}>
+      <td style={tdStyle}>{formatTime(c.ts)}</td>
+      <td style={tdStyle}>{c.durationMs.toFixed(1)}</td>
+      <td style={tdStyle}>{c.fibersUpdated ?? '—'}</td>
+      <td style={tdStyle}>{c.appId ?? '—'}</td>
+    </tr>
+  ))}
+</tbody>
       </table>
       <small>Showing latest 20.</small>
     </div>
@@ -83,6 +83,30 @@ function formatTime(ts: number) {
   }
 }
 
-const listStyle: React.CSSProperties = { display: 'flex', gap: 16, listStyle: 'none', paddingLeft: 0, margin: '8px 0' };
-const tableStyle: React.CSSProperties = { width: '100%', borderCollapse: 'collapse' };
+const listStyle: React.CSSProperties = { 
+  display: 'flex', 
+  gap: 16, 
+  listStyle: 'none', 
+  paddingLeft: 0, 
+  margin: '8px 0' 
+};
+
+const tableStyle: React.CSSProperties = { 
+  width: '100%', 
+  borderCollapse: 'collapse',
+  fontSize: '14px'
+};
+
+const thStyle: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '8px 12px',
+  borderBottom: '2px solid #e5e7eb',
+  fontWeight: '600',
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: '6px 12px',
+  borderBottom: '1px solid #e5e7eb',
+  fontFamily: 'monospace'
+};
 export default CommitMetrics;
