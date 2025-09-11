@@ -109,9 +109,11 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.display}>
-        {count} : {letter}
-      </Text>
+      <Profiler id='App' onRender={onRender}>
+        <Text style={styles.display}>
+          {count} : {letter}
+        </Text>
+      </Profiler>
       <Pressable style={styles.btn} onPress={incCount}>
         <Text style={styles.btnText}>+1</Text>
       </Pressable>

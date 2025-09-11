@@ -135,14 +135,6 @@ export function traverse(fiber: any) {
     treeBaseDuration,
   } = fiber;
 
-  // ok looks like our Fiber nodes have everything that Reactime's does
-  // console.log('sibling:', sibling);
-  // console.log('child:', child);
-  // console.log('actualDuration:', actualDuration);
-  // console.log('actualStartTime:', actualStartTime);
-  // console.log('selfBaseDuration:', selfBaseDuration);
-  // console.log('treeBaseDuration:', treeBaseDuration);
-
   const typeName = fiber.type?.name ?? fiber.elementType?.name ?? fiber.type?.displayName ?? 'Unknown';
   const tagName = fiberTagMap[fiber.tag] ?? `UnknownTag(${fiber.tag})`;
   let memoizedStateKeys;
@@ -170,6 +162,13 @@ export function traverse(fiber: any) {
     tagName === 'ContextProvider'
   ) {
     console.log(`[${typeName}] tag=${tagName} key=${fiber.key} memoizedState keys: ${memoizedStateKeys}`);
+    // ok looks like our Fiber nodes have everything that Reactime's does
+    // console.log('sibling:', sibling);
+    // console.log('child:', child);
+    console.log('actualDuration:', actualDuration);
+    console.log('actualStartTime:', actualStartTime);
+    console.log('selfBaseDuration:', selfBaseDuration);
+    console.log('treeBaseDuration:', treeBaseDuration);
     if (fiber.memoizedState) {
       // print info for queue
       console.log('🦆 memoizedState.queue: ' + fiber.memoizedState?.queue);
