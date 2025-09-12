@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Button, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Button, Text, StyleSheet, Pressable, Image } from 'react-native';
 import Constants from 'expo-constants';
 import { logFiber, traverse } from './useFiberTree';
+import RTNlogo from './assets/RTNlogo.png';
 
 /** Compute laptop IP so the phone can reach ws://<IP>:8080 */
 // const devHost =
@@ -19,6 +20,7 @@ export default function App() {
   // i'm concerned about preserving the proper child/sibling relationships in the JSON
   const [count, setCount] = useState(0);
   const [letter, setLetter] = useState('a');
+  const [showLogo, setShowLogo] = useState(true);
 
   const ws = useRef<WebSocket | null>(null);
 
@@ -109,11 +111,23 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Profiler id='App' onRender={onRender}>
-        <Text style={styles.display}>
-          {count} : {letter}
-        </Text>
-      </Profiler>
+      {showLogo && (
+        <Pressable
+          onPress={() => setShowLogo(false)}
+          style={{
+            position: 'absolute',
+            top: 12, // or your safe-area-aware value
+            alignSelf: 'center',
+          }}
+          accessibilityRole='button'
+          accessibilityLabel='Hide logo'
+        >
+          <Image source={require('./assets/rtn-logo.png')} style={{ width: 160, height: 160 }} resizeMode='contain' />
+        </Pressable>
+      )}
+      <Text style={styles.display}>
+        {count} : {letter}
+      </Text>
       <Pressable style={styles.btn} onPress={incCount}>
         <Text style={styles.btnText}>+1</Text>
       </Pressable>
