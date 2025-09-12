@@ -15,7 +15,7 @@ const MainContainer = (): React.JSX.Element => {
 
   return (
     <div style={{ padding: 16 }}>
-      <h1 style={{ marginTop: 0 }}>Reactime Native DevTool (MVP)</h1>
+      <h1 style={{ marginTop: 0 }}>Reactime Native</h1>
       <TimelineSlider />
       <SnapshotView />
     </div>

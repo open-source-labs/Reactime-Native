@@ -10,7 +10,7 @@ import RTNlogo from './assets/RTNlogo.png';
 //   Constants.manifest?.debuggerHost?.split(':')[0] || // older SDK
 //   'localhost'; // fallback
 
-const devHost = '10.0.0.157'; // Will's laptop IP since the above code wasn't working
+const devHost = process.env.EXPO_PUBLIC_DEV_HOST; // insert your own IP since the above code wasn't working
 
 export default function App() {
   // PATCH: figure out how to store the actual Fiber tree here, and send it over websockets in emit()
