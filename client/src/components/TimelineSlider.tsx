@@ -10,7 +10,7 @@ import type { RootState } from '../store/store'; //app's root state type
 import { jumpToSnapshot, pauseSnapshots } from '../slices/snapshotSlice'; //actions from snapshot slice
 
 // functional react component for the slider
-const TimelineSlider: React.FC = () => {
+const TimelineSlider: React.FC = () => { //functional component maybe from ECMA5
   const dispatch = useDispatch();
 
   //read values from redux store (slice key must be "snapshot" in store.ts)
