@@ -25,36 +25,3 @@ const SnapshotView: React.FC = () => {
 
 export default SnapshotView;
 
-/*
-1ST ATTEMPT:
-const SnapshotView = (): React.JSX.Element => {
-  const snapshots = useSelector((state: RootState) => state.snapshot.snapshots);
-  const currentIndex = useSelector((state: RootState) => state.snapshot.currentIndex);
-  const dispatch = useDispatch();
-
-  // loop through snapshots and render buttons/timeline
-  // highlight current index
-  // allow user to jump to snapshot
-
-  return (
-    <div>
-      <h2>Snapshot Timeline</h2>
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        {snapshots.map((snap, index) => (
-          <button
-            key={index}
-            onClick={() => dispatch(jumpToSnapshot(index))}
-            style={{
-              backgroundColor: index === currentIndex ? 'skyblue' : 'lightgray',
-              padding: '5px',
-            }}
-          >
-            {index}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-*/

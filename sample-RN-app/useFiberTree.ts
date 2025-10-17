@@ -76,7 +76,6 @@ export function logFiber(node: any): void {
 const fiberTagMap: Record<number, string> = {
   0: 'FunctionComponent',
   1: 'ClassComponent',
-  // ChatGPT explanation of tag=2 IndeterminateComponent:
   // recent React code has depreciated/refactored IndeterminateComponent, but it still exists internally in Fiber
   // it indicates React hasn't figured out yet if the component is a function or a class until it's rendered
   // This occurs early in the render phase before the component type is resolved
@@ -116,7 +115,7 @@ const fiberTagMap: Record<number, string> = {
   31: 'ActivityComponent',
 };
 
-// traverses the Fiber tree recursively. (DFS traversal--also how Fiber does it)
+// traverse the Fiber tree recursively. (DFS traversal--also how Fiber does it)
 export function traverse(fiber: any) {
   if (!fiber) return;
 
@@ -153,7 +152,7 @@ export function traverse(fiber: any) {
       if (fiber.memoizedState?.queue && typeof fiber.memoizedState?.queue === 'object') {
         console.log('🦆🔑 queue object keys: ' + Object.keys(fiber.memoizedState?.queue));
       }
-      // printo info for nested memoizedState
+      // print info for nested memoizedState
       console.log('📜 memoizedState.memoizedState: ' + fiber.memoizedState?.memoizedState);
       if (fiber.memoizedState?.memoizedState && typeof fiber.memoizedState?.memoizedState === 'object') {
         console.log('📜🔑 nested memoizedStateKeys: ' + Object.keys(fiber.memoizedState?.memoizedState));

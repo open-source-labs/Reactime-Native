@@ -71,11 +71,11 @@ export default function App() {
   useEffect(() => {
     const hook = (globalThis as any).__REACT_DEVTOOLS_GLOBAL_HOOK__;
     if (!hook) {
-      console.log('❌ DevTools hook not found');
+      console.log(' DevTools hook not found');
       return;
     }
 
-    console.log('✅ DevTools hook found!', Object.keys(hook));
+    console.log('DevTools hook found!', Object.keys(hook));
 
     /* 1. Stream every commit through logFiber */
     hook.onCommitFiberRoot = (_id: any, root: any) => {
@@ -85,16 +85,16 @@ export default function App() {
     /* 2. Walk existing trees once for an initial dump */
     const renderers = hook.renderers;
     if (!renderers || renderers.size === 0) {
-      console.log('⚠️ No renderers found.');
+      console.log(' No renderers found.');
       return;
     }
 
     for (const [rendererId, renderer] of renderers) {
-      console.log(`🔧 Renderer ${rendererId}:`, renderer.rendererPackageName ?? 'unknown');
+      console.log(` Renderer ${rendererId}:`, renderer.rendererPackageName ?? 'unknown');
 
       const roots = hook.getFiberRoots?.(rendererId);
       if (!roots || roots.size === 0) {
-        console.log(`⚠️ No fiber roots found for renderer ${rendererId}`);
+        console.log(` No fiber roots found for renderer ${rendererId}`);
         continue;
       }
 

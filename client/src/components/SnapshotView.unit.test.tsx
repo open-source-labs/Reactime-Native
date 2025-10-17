@@ -1,9 +1,3 @@
-// SnapshotView.test.tsx
-// import { test, expect } from 'vitest';
-// test('placeholder', () => expect(true).toBe(true));
-
-// src/components/SnapshotView.unit.test.tsx
-//import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 

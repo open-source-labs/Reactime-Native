@@ -1,1 +1,0 @@
-//recursively traverse and extract data from Fiber tree

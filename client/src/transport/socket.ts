@@ -1,4 +1,3 @@
-// transport/socket.ts
 import { createListenerMiddleware } from '@reduxjs/toolkit';
 import { addSnapshot } from '../slices/snapshotSlice';
 import { wsConnect, wsDisconnect, wsSend } from './wsActions';
