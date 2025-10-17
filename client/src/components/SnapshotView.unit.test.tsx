@@ -72,7 +72,7 @@ describe('SnapshotView (unit)', () => {
     const { rerender } = render(<SnapshotView />);
     // First render (index 1): should show ts: 2
     expect(screen.getByText(/"ts": 2/)).toBeInTheDocument();
-
+    //test comment to push dev
     // Change state and re-render
     mockState.snapshot.currentIndex = 2;
     rerender(<SnapshotView />);
