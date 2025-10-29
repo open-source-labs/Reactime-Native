@@ -1,18 +1,16 @@
 {
-  "dependencies": {
-    "@reduxjs/toolkit": "^2.8.2",
-    "react-redux": "^9.2.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7"
   },
   "name": "reactime-native",
   "version": "1.0.0",
-  "description": "Will add description later",
+  "private": "true",
+  "description": "A React Native version of the time-travel debugging tool, Reactime",
   "main": "index.js",
   "scripts": {
-    "test": "npm run test"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -23,10 +21,10 @@
     "react",
     "native"
   ],
-  "author": "Ansara Hollinger",
   "contributors": [
     "Will Booth",
-    "Jamila Gibson"
+    "Jamila Gibson",
+    "Ansara Hollinger"
   ],
   "license": "ISC",
   "bugs": {
