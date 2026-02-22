@@ -145,6 +145,29 @@ in CI and provide fast feedback during development.
 
 ---
 
+### Decision 7: wsConfig.ts for Dynamic IP Resolution (RN Side)
+**Context:** The RN demo app had a hardcoded IP address (`10.0.0.157`) pointing
+to one developer's laptop. This broke the WebSocket connection on any other
+machine. A previous attempt using Expo's `Constants.manifest` APIs was
+commented out because it wasn't reliable across SDK versions.
+
+**Decision:** Extract IP resolution into a dedicated `wsConfig.ts` module
+with a prioritized fallback chain:
+1. `EXPO_PUBLIC_WS_HOST` env var — explicit override for any machine
+2. `Constants.expoConfig?.hostUri` — Expo Go / dev client auto-detection
+3. `10.0.2.2` on Android — routes to host machine from an emulator
+4. `'localhost'` — safe fallback for iOS simulator
+
+**Rationale:** Centralizing resolution in one file makes the logic auditable
+and testable. Any developer can set `EXPO_PUBLIC_WS_HOST=<their LAN IP>` in
+`.env.local` without touching application code. The fallback chain means it
+works out of the box in most environments with zero config.
+
+**Tradeoff:** Slightly more indirection vs. a one-liner hardcode, but removes
+a class of environment-specific bugs that previously blocked the whole team.
+
+---
+
 ## Accessibility
 See [ACCESSIBILITY.md](./ACCESSIBILITY.md) for a full log of accessibility
 decisions made and known gaps with WCAG references.
