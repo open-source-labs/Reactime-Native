@@ -2,6 +2,14 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 /**
+ * Strip any scheme (ws:// / wss://) and embedded port from a raw host string.
+ * Prevents malformed WS_URL when the env var is set with extra context
+ * (e.g. 'ws://192.168.1.1' or '192.168.1.1:9999').
+ */
+const sanitizeHost = (raw: string): string =>
+  raw.replace(/^wss?:\/\//, '').split(':')[0];
+
+/**
  * Resolve the WebSocket server host for the current environment.
  *
  * Priority order:
@@ -10,8 +18,12 @@ import Constants from 'expo-constants';
  *  3. Android emulator default      — 10.0.2.2 routes to the host machine's localhost
  *  4. 'localhost'                   — fallback for iOS simulator
  */
+const envHost = process.env.EXPO_PUBLIC_WS_HOST
+  ? sanitizeHost(process.env.EXPO_PUBLIC_WS_HOST)
+  : null;
+
 const host: string =
-  process.env.EXPO_PUBLIC_WS_HOST ||
+  envHost ||
   Constants.expoConfig?.hostUri?.split(':')[0] ||
   (Platform.OS === 'android' ? '10.0.2.2' : 'localhost');
 
