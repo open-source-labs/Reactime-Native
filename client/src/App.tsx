@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import MainContainer from './containers/MainContainer';
-import { wsConnect, wsDisconnect } from './transport/wsActions';
+import { wsConnect, wsDisconnect } from './transport/socket';
 
 function App(): React.JSX.Element {
   const dispatch = useDispatch();
 
-  // we might want the websockets connection in a separate file like websocketsBridge, just to keep App.tsx frontend UI only
   useEffect(() => {
+    console.log('🚀 App mounted, connecting to WebSocket...');
     dispatch(wsConnect('ws://localhost:8080'));
     return () => {
+      console.log('🔌 App unmounting, disconnecting WebSocket...');
       dispatch(wsDisconnect());
     };
   }, [dispatch]);
@@ -22,4 +23,3 @@ function App(): React.JSX.Element {
 }
 
 export default App;
-
