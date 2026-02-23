@@ -145,6 +145,26 @@ in CI and provide fast feedback during development.
 
 ---
 
+### Decision 8: Shift-Left Testing for wsConfig.ts
+**Context:** `WS_URL` is computed at module load time — a silent failure
+(e.g. `ws://undefined:8080` or `ws://:8080`) would pass code review, build
+successfully, and only surface at runtime on a physical device.
+
+**Decision:** Write unit tests covering all four fallback steps in the
+priority chain, the contract shape (`ws://<host>:8080`), and the three
+silent failure modes before wiring the module into the app.
+
+**Rationale:** These bugs are cheap to catch in CI and expensive to catch
+on a device. Testing the failure modes (`undefined`, empty string, unusual
+port) makes the shift-left intent explicit rather than incidental.
+
+**Tradeoff:** Requires `vi.resetModules()` + `vi.doMock()` + dynamic
+`import()` per test to re-evaluate a module with top-level side effects —
+slightly more setup than standard mocking, but necessary given the
+module's architecture.
+
+---
+
 ### Decision 7: wsConfig.ts for Dynamic IP Resolution (RN Side)
 **Context:** The RN demo app had a hardcoded IP address (`10.0.0.157`) pointing
 to one developer's laptop. This broke the WebSocket connection on any other
@@ -165,6 +185,14 @@ works out of the box in most environments with zero config.
 
 **Tradeoff:** Slightly more indirection vs. a one-liner hardcode, but removes
 a class of environment-specific bugs that previously blocked the whole team.
+
+**Follow-up (caught by tests):** Writing the unit tests revealed that the
+initial implementation passed the env var directly into the URL template
+without sanitization. A value like `ws://192.168.1.1` would produce
+`ws://ws://192.168.1.1:8080`; `192.168.1.1:9999` would produce
+`ws://192.168.1.1:9999:8080`. Both are syntactically valid URLs that fail
+silently at connection time. A `sanitizeHost()` helper was added to strip
+any leading scheme and embedded port before interpolation.
 
 ---
 
