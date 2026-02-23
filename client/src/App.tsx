@@ -7,10 +7,10 @@ function App(): React.JSX.Element {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    console.log('🚀 App mounted, connecting to WebSocket...');
+    console.log('App mounted, connecting to WebSocket...');
     dispatch(wsConnect('ws://localhost:8080'));
     return () => {
-      console.log('🔌 App unmounting, disconnecting WebSocket...');
+      console.log('App unmounting, disconnecting WebSocket...');
       dispatch(wsDisconnect());
     };
   }, [dispatch]);

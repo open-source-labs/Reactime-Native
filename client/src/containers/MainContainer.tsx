@@ -1,17 +1,26 @@
 // src/containers/MainContainer.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../store/store';
-import { wsSend } from '../transport/socket';
+import { wsSend, getSocketReadyState } from '../transport/socket';
 import SnapshotView from '../components/SnapshotView';
 import TimelineSlider from '../components/TimelineSlider';
 import MetricsPanel from '../components/MetricsPanel';
+
+const WS_STATE_LABEL: Record<number, string> = { 0: 'CONNECTING…', 1: '✅ OPEN', 2: 'CLOSING…', 3: 'CLOSED' };
+const WS_STATE_COLOR: Record<number, string> = { 0: '#f59e0b', 1: '#10b981', 2: '#f59e0b', 3: '#ef4444' };
 
 // Inline debug component — remove when no longer needed
 const ConnectionDebugger: React.FC = () => {
   const dispatch = useDispatch();
   const { snapshots, currentIndex } = useSelector((s: RootState) => s.snapshot);
   const { commits, lags, firstRenders } = useSelector((s: RootState) => s.metric);
+
+  const [wsState, setWsState] = useState<number>(-1);
+  useEffect(() => {
+    const timer = setInterval(() => setWsState(getSocketReadyState()), 500);
+    return () => clearInterval(timer);
+  }, []);
 
   const sendTestSnapshot = () => {
     const testSnapshot = {
@@ -54,6 +63,7 @@ const ConnectionDebugger: React.FC = () => {
         appId: 'debug-test'
       }
     };
+    console.log('⏱️ Sending test lag metric:', testMetric);
     dispatch(wsSend(testMetric));
   };
 
@@ -67,6 +77,7 @@ const ConnectionDebugger: React.FC = () => {
         appId: 'debug-test'
       }
     };
+    console.log('🚀 Sending test first render metric:', testMetric);
     dispatch(wsSend(testMetric));
   };
 
@@ -84,6 +95,10 @@ const ConnectionDebugger: React.FC = () => {
       maxWidth: 200
     }}>
       <h4 style={{ margin: '0 0 8px 0', color: '#f1f5f9' }}>🔧 Debug Panel</h4>
+
+      <div style={{ marginBottom: 6, padding: '4px 6px', borderRadius: 4, background: '#0f172a', fontSize: 10, fontWeight: 600, color: WS_STATE_COLOR[wsState] ?? '#6b7280' }}>
+        WS: {WS_STATE_LABEL[wsState] ?? 'NO SOCKET'}
+      </div>
 
       <div style={{ marginBottom: 8, color: '#94a3b8' }}>
         📦 Snapshots: {snapshots.length}<br/>

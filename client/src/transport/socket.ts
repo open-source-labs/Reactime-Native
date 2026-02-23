@@ -60,6 +60,9 @@ export const wsListener = createListenerMiddleware();
 let socket: WebSocket | null = null;
 let closedByUser = false;
 
+/** Returns the current WebSocket readyState, or -1 if no socket exists. */
+export const getSocketReadyState = (): number => socket?.readyState ?? -1;
+
 // CONNECT
 wsListener.startListening({
   actionCreator: wsConnect,
