@@ -11,6 +11,7 @@
 - Explicit error messages surfaced in the UI rather than silent failures
 - **Rationale:** Users (developers) need to know *why* a connection failed, not just that it did. Opaque failures are an accessibility barrier.
 - **WCAG reference:** Success Criterion 4.1.3 (Status Messages) — status messages surfaced without receiving focus
+- **Test coverage:** The server integration test suite (`server.test.ts`) verifies that malformed JSON produces a structured `{ channel: 'control', type: 'error', payload: { message, raw } }` response — confirming the error signal reaches the client and is available for the UI to surface. The accessibility decision is only meaningful if the underlying pipeline delivers the error reliably.
 
 ---
 

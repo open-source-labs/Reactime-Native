@@ -145,6 +145,97 @@ in CI and provide fast feedback during development.
 
 ---
 
+### Decision 7: wsConfig.ts — Dynamic IP Resolution with sanitizeHost()
+**Context:** The RN app had a hardcoded teammate IP address
+(`ws://10.0.0.157:8080`). Every environment change required a source edit.
+A commented-out Expo Constants attempt had been abandoned due to unreliability
+across SDK versions.
+
+**Decision:** Extracted host resolution into `wsConfig.ts` with a four-step
+priority chain: env var override → Expo `hostUri` → Android emulator default
+(`10.0.2.2`) → `localhost`. Added `sanitizeHost()` to strip malformed env
+var values (e.g. `ws://192.168.1.1` → `192.168.1.1`) before interpolation.
+
+**Rationale:** Any developer can now connect by dropping
+`EXPO_PUBLIC_WS_HOST` into `.env.local` — no source changes required.
+The fallback chain covers every supported environment without branching logic
+in the consuming component.
+
+**Tradeoff:** One additional module to maintain; tradeoff accepted because it
+removes a recurring manual step and makes the tool usable out of the box.
+
+---
+
+### Decision 8: Shift-Left Testing for wsConfig.ts
+**Context:** `WS_URL` is computed at module load time. Malformed values like
+`ws://undefined:8080` are syntactically valid, pass TypeScript checks, and
+only fail at runtime on a physical device — the worst possible moment to catch
+a bug.
+
+**Decision:** Wrote 9 unit tests before wiring the module into the app,
+covering the priority chain, contract shape (must start with `ws://`, must
+include port 8080), and three shift-left failure modes (undefined resolution,
+empty host, malformed env var with embedded protocol).
+
+**Outcome:** Tests caught a real bug — the initial implementation passed the
+env var directly into the URL template, producing `ws://ws://192.168.1.1:8080`.
+`sanitizeHost()` was added in direct response to the failing test, before
+the bug reached the app.
+
+**Tradeoff:** Shift-left tests require more setup than smoke tests; justified
+here because the failure mode is silent and environment-specific.
+
+---
+
+### Decision 9: Server Refactored for Testability
+**Context:** `server.js` originally started a WebSocket server on port 8080
+as a top-level side effect — any `require()` of the file would bind the port.
+The broadcast routing logic was inline inside the connection handler with no
+way to test it in isolation.
+
+**Decision:** Extracted two named, exported functions:
+- `broadcast(wss, senderWs, parsed)` — pure routing logic, testable with
+  mock objects
+- `createServer(port, host)` — factory that constructs and returns the server
+  without binding a port at import time
+
+Guarded the auto-start with `if (require.main === module)` so the module is
+safely importable in tests without side effects.
+
+**Rationale:** Functions that cannot be called in isolation cannot be unit
+tested. The `require.main` guard is the minimal, idiomatic Node.js pattern
+for separating library behavior from CLI behavior.
+
+**Tradeoff:** Slightly more surface area in the module's public API; accepted
+because the alternative is untestable code in a critical data relay.
+
+---
+
+### Decision 10: Layered Server Testing Strategy (Unit + Integration)
+**Context:** The server's broadcast logic had two distinct failure surfaces:
+the routing algorithm itself (which clients receive a message) and the
+full network stack (real WebSocket handshakes, TCP close events, JSON parsing).
+A single test type cannot cover both efficiently.
+
+**Decision:** Two-layer test suite in `server.test.ts`:
+- **Unit tests** (4): mock ws client objects, test `broadcast()` directly —
+  sender exclusion, readyState filtering, single-client echo mode, JSON
+  serialization. No I/O, no ports, no flakiness.
+- **Integration tests** (7): real server on port 8081 spun up/torn down per
+  suite via `beforeEach`/`afterEach` — connection acceptance, A→B forwarding,
+  sender non-receipt, ping/pong, malformed JSON error response, disconnect
+  resilience, single-client debug mode.
+
+**Rationale:** Unit tests catch logic bugs instantly with zero environment
+dependencies. Integration tests catch what unit tests cannot: port binding,
+TCP handshake behavior, and the full message parsing pipeline.
+
+**Tradeoff:** Integration tests add real async I/O and are slower than unit
+tests; mitigated by running on an isolated port (8081) and using
+`Promise`-based helpers with proper teardown to prevent test pollution.
+
+---
+
 ## Accessibility
 See [ACCESSIBILITY.md](./ACCESSIBILITY.md) for a full log of accessibility
 decisions made and known gaps with WCAG references.
