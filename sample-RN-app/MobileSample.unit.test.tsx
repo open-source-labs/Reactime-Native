@@ -1,30 +1,36 @@
 /**
  * MobileSample.unit.test.tsx
  *
- * Unit tests for MobileSample.tsx — the React Native component that opens a
- * WebSocket connection and emits state changes (count, letter) to the server.
+ * Unit tests for MobileSample.tsx using React Testing Library.
  *
- * Strategy:
- * - Global WebSocket is replaced with a vi.fn() factory that returns a
- *   controllable mock socket; onopen/onerror/onclose are assignable properties.
- * - './wsConfig' is mocked to return a fixed URL so no env/Expo/Platform
- *   resolution runs during the test.
- * - 'react-native' primitives are shimmed to DOM-compatible elements so the
- *   component renders without a native runtime.
- * - './useFiberTree' is stubbed as no-ops (DevTools traversal is out of scope).
- * - react-test-renderer + act() are used for rendering and interaction.
+ * RTL replaces the deprecated react-test-renderer. Since react-native
+ * primitives are shimmed to DOM-compatible elements, @testing-library/react
+ * renders the component tree against a real jsdom without a Babel transform
+ * or native runtime. The per-file directive below sets the Vitest environment
+ * to jsdom for this file only — the integration test stays in 'node'.
+ *
+ * Mocking strategy (unchanged from previous version):
+ * - Global WebSocket replaced with a vi.fn() factory (controllable mock socket)
+ * - './wsConfig' returns a fixed URL — no env/Expo/Platform resolution
+ * - 'react-native' primitives shimmed to DOM-compatible elements
+ * - './useFiberTree' stubbed as no-ops
+ *
+ * Key RTL improvements over react-test-renderer:
+ * - render() / screen / fireEvent replace renderer.create() / tree.root.findAll()
+ * - Buttons found by accessible role + name, not by internal tree type
+ * - unmount() is provided by render() return value — no renderer reference needed
  *
  * Setup required (add to sample-RN-app/package.json devDependencies):
  *   "vitest": "^3.x"
- *   "react-test-renderer": "<same version as react>"
- *   "@types/react-test-renderer": "<same version as react>"
+ *   "@testing-library/react": "^16.x"
+ *   "jsdom": "^26.x"
  * And create sample-RN-app/vitest.config.ts with { test: { environment: 'node' } }.
+ * The environment is set to jsdom via environmentMatchGlobs in vitest.config.ts.
  */
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { act } from 'react';
-import renderer from 'react-test-renderer';
+import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
 
 // ── Mock './wsConfig' — fixed URL, no env or platform resolution ─────────────
 vi.mock('./wsConfig', () => ({ WS_URL: 'ws://localhost:8080' }));
@@ -36,8 +42,8 @@ vi.mock('./useFiberTree', () => ({
 }));
 
 // ── Mock 'react-native' — shim primitives to DOM-compatible elements ─────────
-// This lets react-test-renderer render the component tree in Node without a
-// native runtime. The shimmed types match the component's import surface.
+// View → div, Text → span, Pressable → button.
+// RTL queries by accessible role/name against this DOM tree.
 vi.mock('react-native', () => ({
   View: ({ children }: { children: React.ReactNode }) =>
     React.createElement('div', null, children),
@@ -56,10 +62,6 @@ vi.mock('react-native', () => ({
 }));
 
 // ── Mock global WebSocket ────────────────────────────────────────────────────
-// Each test gets a fresh mock socket via the factory. Properties are set to
-// null so the component can assign its own handlers (onopen, onerror, etc.)
-// and the test can trigger them explicitly.
-
 type MockSocket = {
   send: ReturnType<typeof vi.fn>;
   close: ReturnType<typeof vi.fn>;
@@ -72,15 +74,18 @@ type MockSocket = {
 
 let mockSocket: MockSocket;
 
-const MockWebSocket = vi.fn().mockImplementation(() => {
+// Must be a regular function (not arrow) — Vitest v4 calls the implementation
+// with `new` when the mock itself is called with `new WebSocket(...)`.
+// Arrow functions are not constructable and would throw "is not a constructor".
+const MockWebSocket = vi.fn().mockImplementation(function MockWS() {
   mockSocket = {
-    send:        vi.fn(),
-    close:       vi.fn(),
-    readyState:  1,   // WebSocket.OPEN — default so emit() works out of the box
-    onopen:      null,
-    onerror:     null,
-    onclose:     null,
-    onmessage:   null,
+    send:       vi.fn(),
+    close:      vi.fn(),
+    readyState: 1,   // WebSocket.OPEN — default so emit() works out of the box
+    onopen:     null,
+    onerror:    null,
+    onclose:    null,
+    onmessage:  null,
   };
   return mockSocket;
 });
@@ -94,15 +99,6 @@ vi.stubGlobal('WebSocket', MockWebSocket);
 import App from './MobileSample';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Render the App component synchronously inside act(). */
-function renderApp(): renderer.ReactTestRenderer {
-  let tree!: renderer.ReactTestRenderer;
-  act(() => {
-    tree = renderer.create(React.createElement(App));
-  });
-  return tree;
-}
 
 /** Trigger socket.onopen and flush React state updates. */
 function triggerOpen(): void {
@@ -125,12 +121,17 @@ describe('MobileSample (unit)', () => {
   });
 
   afterEach(() => {
+    // Explicitly unmount all rendered components so the jsdom body is clean
+    // between tests. RTL's auto-cleanup doesn't fire reliably in Vitest v4
+    // projects mode, so accumulated renders would cause "Found multiple elements"
+    // errors on subsequent getByRole queries.
+    cleanup();
     vi.clearAllMocks();
   });
 
   // 1 ─────────────────────────────────────────────────────────────────────────
   it('opens a WebSocket connection to WS_URL on mount', () => {
-    renderApp();
+    render(<App />);
 
     expect(MockWebSocket).toHaveBeenCalledOnce();
     expect(MockWebSocket).toHaveBeenCalledWith('ws://localhost:8080');
@@ -138,7 +139,7 @@ describe('MobileSample (unit)', () => {
 
   // 2 ─────────────────────────────────────────────────────────────────────────
   it('sends the initial state payload (count=0, letter=a) when the socket opens', () => {
-    renderApp();
+    render(<App />);
     triggerOpen();
 
     expect(mockSocket.send).toHaveBeenCalledOnce();
@@ -150,13 +151,11 @@ describe('MobileSample (unit)', () => {
 
   // 3 ─────────────────────────────────────────────────────────────────────────
   it('sends count=1 and letter=a after the +1 button is pressed', () => {
-    const tree = renderApp();
+    render(<App />);
     triggerOpen();
     mockSocket.send.mockClear(); // ignore the onopen send
 
-    // Rendered tree (after react-native mocks): div > button(+1), button(next letter)
-    const buttons = tree.root.findAll((n) => n.type === 'button');
-    act(() => { buttons[0].props.onClick(); }); // +1 Pressable
+    fireEvent.click(screen.getByRole('button', { name: '+1' }));
 
     expect(mockSocket.send).toHaveBeenCalledOnce();
     const payload = lastSentPayload();
@@ -166,12 +165,11 @@ describe('MobileSample (unit)', () => {
 
   // 4 ─────────────────────────────────────────────────────────────────────────
   it('sends count=0 and letter=b after the next letter button is pressed', () => {
-    const tree = renderApp();
+    render(<App />);
     triggerOpen();
     mockSocket.send.mockClear();
 
-    const buttons = tree.root.findAll((n) => n.type === 'button');
-    act(() => { buttons[1].props.onClick(); }); // next letter Pressable
+    fireEvent.click(screen.getByRole('button', { name: 'next letter' }));
 
     expect(mockSocket.send).toHaveBeenCalledOnce();
     const payload = lastSentPayload();
@@ -181,29 +179,25 @@ describe('MobileSample (unit)', () => {
 
   // 5 ─────────────────────────────────────────────────────────────────────────
   it('does NOT call send() via emit() when socket readyState is not OPEN', () => {
-    const tree = renderApp();
-    // Set readyState to CONNECTING before any button interaction.
-    // Do not trigger onopen so no send() happens in that path either.
-    mockSocket.readyState = 0; // WebSocket.CONNECTING
+    render(<App />);
+    mockSocket.readyState = 0; // WebSocket.CONNECTING — do not trigger onopen
 
-    const buttons = tree.root.findAll((n) => n.type === 'button');
-    act(() => { buttons[0].props.onClick(); });
+    fireEvent.click(screen.getByRole('button', { name: '+1' }));
 
-    // send() was never called — neither onopen (not triggered) nor emit()
     expect(mockSocket.send).not.toHaveBeenCalled();
   });
 
   // 6 ─────────────────────────────────────────────────────────────────────────
   it('closes the WebSocket when the component unmounts', () => {
-    const tree = renderApp();
-    act(() => { tree.unmount(); });
+    const { unmount } = render(<App />);
+    act(() => { unmount(); });
 
     expect(mockSocket.close).toHaveBeenCalledOnce();
   });
 
   // 7 ─────────────────────────────────────────────────────────────────────────
   it('does not crash when socket.onerror fires', () => {
-    renderApp();
+    render(<App />);
 
     expect(() => {
       act(() => { mockSocket.onerror?.(new Event('error')); });

@@ -207,26 +207,45 @@ is occupied. Mitigated by explicit teardown and a dedicated test port.
 
 ---
 
-### Decision 11: React Native Component Testing Without a Native Runtime
+### Decision 11: React Native Component Testing — RTL over react-test-renderer
 **Context:** `MobileSample.tsx` uses React Native primitives (View, Pressable,
 Text) and opens a native WebSocket connection on mount. Neither works in a Node.js
-test environment — there is no native bridge, no UI thread, no native WebSocket.
+test environment. An initial implementation used `react-test-renderer`, but that
+package was deprecated in React 18/19. Three alternatives were evaluated:
 
-**Decision:** Three-part shim strategy in `MobileSample.unit.test.tsx`:
+1. **`react-test-renderer`** — deprecated; React team explicitly recommends
+   migrating away. Peer dependency version pinning caused install friction
+   (`react@19.1.0` vs. renderer requiring `^19.2.4`).
+2. **`@testing-library/react-native`** — the RTL equivalent for real RN primitives,
+   but requires Babel transforms (`babel-jest`, `babel-preset-react-native`) to
+   handle RN's non-standard JS. Adding Babel inside a Vitest project introduces
+   two competing transform pipelines (esbuild + Babel), which is fragile,
+   poorly documented, and conflicts with Vite's ESM-native architecture.
+3. **`@testing-library/react` + jsdom** — DOM-focused RTL. Works natively with
+   Vitest/esbuild. No Babel required. Compatible with the existing `client/`
+   test setup.
+
+**Decision:** Use `@testing-library/react` with jsdom and a three-part shim
+strategy in `MobileSample.unit.test.tsx`:
 1. **`vi.mock('react-native')`** — replace View/Pressable/Text with DOM-compatible
-   elements (div/button/span) so react-test-renderer can render the tree
+   elements (div/button/span); RTL queries against this real DOM via jsdom
 2. **`vi.stubGlobal('WebSocket', MockWebSocket)`** — replace global WebSocket with
    a vi.fn() factory returning a controllable mock socket
-3. **`vi.mock('./wsConfig')`** — return a fixed URL to prevent any env/Expo/Platform
-   resolution during tests
+3. **`vi.mock('./wsConfig')`** — return a fixed URL, no env/Expo/Platform resolution
 
-**Rationale:** This lets the component render and interact in Node with no native
-runtime. Tests cover all observable behaviors: socket lifecycle, send payloads,
-guard on readyState, and unmount cleanup.
+A `// @vitest-environment jsdom` per-file directive overrides the environment for
+the unit test only, keeping the integration test in `node`.
 
-**Tradeoff:** Mock fidelity is limited to what we shim — real layout, native
-gesture handling, and platform-specific rendering are not covered. Acceptable for
-unit testing logic; native behavior requires a device or Detox E2E tests.
+**Rationale:** Since react-native is already shimmed to DOM elements, the component
+renders as HTML — RTL + jsdom is the natural fit. It stays entirely within the
+Vitest/esbuild ecosystem, requires no Babel config, and matches the toolchain
+already in use in `client/`. Buttons are queried by accessible role + name
+(`getByRole('button', { name: '+1' })`), which is more resilient to refactors
+than internal tree traversal.
+
+**Tradeoff:** Real layout, native gesture handling, and platform-specific rendering
+are not covered. Acceptable for unit testing logic; native behavior requires a
+device or Detox E2E tests.
 
 ---
 
