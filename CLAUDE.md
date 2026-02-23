@@ -165,6 +165,96 @@ module's architecture.
 
 ---
 
+### Decision 9: Server Refactor for Testability
+**Context:** `server.js` had a top-level side effect — importing the file
+immediately started a WebSocket server on port 8080, binding the port at
+require-time. This made isolated unit testing impossible without spinning up
+a real server for every test run.
+
+**Decision:** Extracted `broadcast(wss, senderWs, parsed)` as a named function,
+wrapped server construction in a `createServer(port, host)` factory, and added
+a `require.main === module` guard to separate library behavior from CLI behavior.
+Added `module.exports = { broadcast, createServer }` to expose both for tests.
+
+**Rationale:** The `require.main === module` pattern is idiomatic Node.js — it's
+what makes npm packages testable without special setup. Extracting `broadcast()`
+allows the routing logic (sender exclusion, non-OPEN client skipping, single-client
+echo) to be tested with mock objects and zero I/O.
+
+**Tradeoff:** Slightly more indirection in the server file, but `broadcast()` is
+now pure and `createServer()` is side-effect-free on import — the cost is minimal
+and the gain in testability is significant.
+
+---
+
+### Decision 10: Layered Server Testing Strategy (Unit + Integration)
+**Context:** Server logic has two distinct failure surfaces: routing algorithm
+correctness (pure logic) and network behavior correctness (real TCP, frame parsing,
+malformed input, disconnect handling).
+
+**Decision:** Two test layers in `server.test.ts`:
+- **Unit tests** — mock `ws` client objects, test `broadcast()` in pure isolation
+- **Integration tests** — real `WebSocketServer` on port 8081, real connections,
+  `beforeEach`/`afterEach` teardown for clean state
+
+**Rationale:** Unit tests catch logic bugs instantly without I/O. Integration tests
+catch seam failures — malformed JSON that crashes the process, connections that
+close mid-message, the single-client echo path under real TCP. Both layers together
+give confidence the unit shipped matches the unit tested.
+
+**Tradeoff:** Integration tests are slower and port-dependent; flaky if port 8081
+is occupied. Mitigated by explicit teardown and a dedicated test port.
+
+---
+
+### Decision 11: React Native Component Testing Without a Native Runtime
+**Context:** `MobileSample.tsx` uses React Native primitives (View, Pressable,
+Text) and opens a native WebSocket connection on mount. Neither works in a Node.js
+test environment — there is no native bridge, no UI thread, no native WebSocket.
+
+**Decision:** Three-part shim strategy in `MobileSample.unit.test.tsx`:
+1. **`vi.mock('react-native')`** — replace View/Pressable/Text with DOM-compatible
+   elements (div/button/span) so react-test-renderer can render the tree
+2. **`vi.stubGlobal('WebSocket', MockWebSocket)`** — replace global WebSocket with
+   a vi.fn() factory returning a controllable mock socket
+3. **`vi.mock('./wsConfig')`** — return a fixed URL to prevent any env/Expo/Platform
+   resolution during tests
+
+**Rationale:** This lets the component render and interact in Node with no native
+runtime. Tests cover all observable behaviors: socket lifecycle, send payloads,
+guard on readyState, and unmount cleanup.
+
+**Tradeoff:** Mock fidelity is limited to what we shim — real layout, native
+gesture handling, and platform-specific rendering are not covered. Acceptable for
+unit testing logic; native behavior requires a device or Detox E2E tests.
+
+---
+
+### Decision 12: Three-Layer Integration Test (wsConfig → WebSocket → Redux)
+**Context:** The three layers of the data pipeline (URL resolution, WebSocket
+transport, Redux state update) were tested in isolation but never together.
+A silent composition failure — correct config, correct transport, wrong slice
+dispatch — would not be caught by any existing test.
+
+**Decision:** `websocket.integration.test.ts` validates the full pipeline in one
+test suite, organized by layer:
+- **Layer 1:** `wsConfig` resolves the correct URL from `EXPO_PUBLIC_WS_HOST`
+- **Layer 2:** Real `ws` server on port 8081 + native WebSocket clients for
+  connect, send, broadcast, and sender-exclusion assertions
+- **Layer 3:** Inline `snapshotSlice` + `configureStore` verifying `addSnapshot`
+  updates store state and fires subscribed listeners
+- **Full round trip:** RN client → server broadcast → browser client → Redux store
+
+**Rationale:** Integration tests catch the seams — the points where the layers
+hand off to each other. The round-trip test is the highest-confidence assertion
+we have that the system works as a whole before connecting real devices.
+
+**Tradeoff:** Requires real port binding and teardown; `snapshotSlice` is inlined
+rather than imported from `client/` to keep the test self-contained without
+cross-package imports. The inline slice mirrors the real one and is kept minimal.
+
+---
+
 ### Decision 7: wsConfig.ts for Dynamic IP Resolution (RN Side)
 **Context:** The RN demo app had a hardcoded IP address (`10.0.0.157`) pointing
 to one developer's laptop. This broke the WebSocket connection on any other
