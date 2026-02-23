@@ -28,3 +28,4 @@ const host: string =
   (Platform.OS === 'android' ? '10.0.2.2' : 'localhost');
 
 export const WS_URL = `ws://${host}:8080`;
+
