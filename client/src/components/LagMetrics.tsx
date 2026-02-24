@@ -37,7 +37,7 @@ const LagMetrics: React.FC = () => {
           <li key={i}>
             <span style={{ display: 'inline-block', width: 96 }}>{formatTime(l.ts)}</span>
             <strong>{l.lagMs.toFixed(1)} ms</strong>
-            {l.appId ? <span style={{ color: '#6b7280' }}> • {l.appId}</span> : null}
+            {l.appId ? <span style={{ color: '#94a3b8' }}> • {l.appId}</span> : null}
           </li>
         ))}
       </ol>
@@ -49,7 +49,7 @@ const LagMetrics: React.FC = () => {
 const Empty: React.FC<{ title: string; hint?: string }> = ({ title, hint }) => (
   <div>
     <h3 style={{ marginTop: 0 }}>{title}</h3>
-    <p style={{ margin: 0, color: '#6b7280' }}>{hint ?? 'No data yet.'}</p>
+    <p style={{ margin: 0, color: '#94a3b8' }}>{hint ?? 'No data yet.'}</p>
   </div>
 );
 

@@ -64,7 +64,7 @@ const CommitMetrics: React.FC = () => {
 const Empty: React.FC<{ title: string; hint?: string }> = ({ title, hint }) => (
   <div>
     <h3 style={{ marginTop: 0 }}>{title}</h3>
-    <p style={{ margin: 0, color: '#6b7280' }}>{hint ?? 'No data yet.'}</p>
+    <p style={{ margin: 0, color: '#94a3b8' }}>{hint ?? 'No data yet.'}</p>
   </div>
 );
 
@@ -100,13 +100,15 @@ const tableStyle: React.CSSProperties = {
 const thStyle: React.CSSProperties = {
   textAlign: 'left',
   padding: '8px 12px',
-  borderBottom: '2px solid #e5e7eb',
+  borderBottom: '2px solid #334155',
   fontWeight: '600',
+  color: '#94a3b8',
 };
 
 const tdStyle: React.CSSProperties = {
   padding: '6px 12px',
-  borderBottom: '1px solid #e5e7eb',
-  fontFamily: 'monospace'
+  borderBottom: '1px solid #334155',
+  fontFamily: 'var(--font-mono, monospace)',
+  fontSize: 13,
 };
 export default CommitMetrics;

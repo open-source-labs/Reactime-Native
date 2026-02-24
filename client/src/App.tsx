@@ -16,7 +16,7 @@ function App(): React.JSX.Element {
   }, [dispatch]);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', color: '#f1f5f9' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', color: '#f1f5f9', fontFamily: 'var(--font-sans)' }}>
       <MainContainer />
     </div>
   );

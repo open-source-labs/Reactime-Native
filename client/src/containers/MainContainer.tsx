@@ -81,6 +81,19 @@ const ConnectionDebugger: React.FC = () => {
     dispatch(wsSend(testMetric));
   };
 
+  const btnBase: React.CSSProperties = {
+    display: 'block', width: '100%', marginBottom: 4,
+    padding: '5px 8px', fontSize: 11,
+    color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer',
+    fontFamily: 'var(--font-sans)',
+  };
+
+  const statsGrid: React.CSSProperties = {
+    display: 'grid', gridTemplateColumns: '1fr 1fr',
+    gap: '2px 8px', marginBottom: 8,
+    color: '#94a3b8', fontSize: 11,
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -89,39 +102,40 @@ const ConnectionDebugger: React.FC = () => {
       background: '#1e293b',
       border: '1px solid #334155',
       borderRadius: 8,
-      padding: 8,
-      fontSize: 10,
+      padding: '8px 10px',
+      fontSize: 11,
       zIndex: 1000,
-      maxWidth: 200
+      maxWidth: 220,
+      fontFamily: 'var(--font-sans)',
     }}>
-      <h4 style={{ margin: '0 0 8px 0', color: '#f1f5f9' }}>🔧 Debug Panel</h4>
+      <h4 style={{ margin: '0 0 6px 0', color: '#f1f5f9', fontSize: 12, fontWeight: 600 }}>Debug Panel</h4>
 
-      <div style={{ marginBottom: 6, padding: '4px 6px', borderRadius: 4, background: '#0f172a', fontSize: 10, fontWeight: 600, color: WS_STATE_COLOR[wsState] ?? '#6b7280' }}>
+      <div style={{ marginBottom: 6, padding: '3px 6px', borderRadius: 4, background: '#0f172a', fontWeight: 600, color: WS_STATE_COLOR[wsState] ?? '#6b7280' }}>
         WS: {WS_STATE_LABEL[wsState] ?? 'NO SOCKET'}
       </div>
 
-      <div style={{ marginBottom: 8, color: '#94a3b8' }}>
-        📦 Snapshots: {snapshots.length}<br/>
-        📍 Current: {currentIndex}<br/>
-        📊 Commits: {commits.length}<br/>
-        📈 Lags: {lags.length}<br/>
-        🎯 First Renders: {firstRenders.length}
+      <div style={statsGrid}>
+        <span>Snapshots:</span><span>{snapshots.length}</span>
+        <span>Current:</span><span>{currentIndex}</span>
+        <span>Commits:</span><span>{commits.length}</span>
+        <span>Lags:</span><span>{lags.length}</span>
+        <span>First Renders:</span><span>{firstRenders.length}</span>
       </div>
 
-      <button onClick={sendTestSnapshot} style={{ display: 'block', width: '100%', marginBottom: 4, padding: 4, fontSize: 10, background: '#3b82f6', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-        📤 Send Test Snapshot
+      <button onClick={sendTestSnapshot} style={{ ...btnBase, background: '#3b82f6' }}>
+        Test Snapshot
       </button>
 
-      <button onClick={sendTestCommitMetric} style={{ display: 'block', width: '100%', marginBottom: 4, padding: 4, fontSize: 10, background: '#10b981', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-        📊 Send Test Commit Metric
+      <button onClick={sendTestCommitMetric} style={{ ...btnBase, background: '#10b981' }}>
+        Test Commit Metric
       </button>
 
-      <button onClick={sendTestLagMetric} style={{ display: 'block', width: '100%', marginBottom: 4, padding: 4, fontSize: 10, background: '#f59e0b', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-        ⏱️ Send Test Lag Metric
+      <button onClick={sendTestLagMetric} style={{ ...btnBase, background: '#f59e0b' }}>
+        Test Lag Metric
       </button>
 
-      <button onClick={sendTestFirstRenderMetric} style={{ display: 'block', width: '100%', marginBottom: 4, padding: 4, fontSize: 10, background: '#8b5cf6', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-        🚀 Send Test First Render Metric
+      <button onClick={sendTestFirstRenderMetric} style={{ ...btnBase, background: '#8b5cf6', marginBottom: 0 }}>
+        Test First Render
       </button>
     </div>
   );
@@ -140,13 +154,13 @@ const MainContainer: React.FC = () => {
       <ConnectionDebugger />
 
       <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16, height: '100vh' }}>
-        <aside style={{ padding: 12, borderRight: '1px solid #eee' }}>
-          <h3 style={{ margin: '8px 0 12px' }}>Timeline</h3>
+        <aside style={{ padding: 12, borderRight: '1px solid #334155' }}>
+          <h3 style={{ margin: '8px 0 12px', color: '#f1f5f9' }}>Timeline</h3>
           <TimelineSlider />
         </aside>
 
         <main style={{ display: 'grid', gridTemplateRows: '1fr auto', gap: 16 }}>
-          <section style={{ padding: 12, overflow: 'auto', borderBottom: '1px solid #eee' }}>
+          <section style={{ padding: 12, overflow: 'auto', borderBottom: '1px solid #334155' }}>
             <SnapshotView
               snapshot={current}
               index={currentIndex}

@@ -22,9 +22,9 @@ const FirstRenderMetric: React.FC = () => {
       <h3 style={{ marginTop: 0 }}>First Screen Render</h3>
       <div style={row}>
         <span style={badge(badgeColor)}>{latest.firstRenderMs.toFixed(0)} ms</span>
-        <span style={{ color: '#6b7280', marginLeft: 8 }}>{new Date(latest.ts).toLocaleTimeString()}</span>
+        <span style={{ color: '#94a3b8', marginLeft: 8 }}>{new Date(latest.ts).toLocaleTimeString()}</span>
       </div>
-      {latest.appId ? <small style={{ color: '#6b7280' }}>App: {latest.appId}</small> : null}
+      {latest.appId ? <small style={{ color: '#94a3b8' }}>App: {latest.appId}</small> : null}
     </div>
   );
 };
@@ -32,7 +32,7 @@ const FirstRenderMetric: React.FC = () => {
 const Empty: React.FC<{ title: string; hint?: string }> = ({ title, hint }) => (
   <div>
     <h3 style={{ marginTop: 0 }}>{title}</h3>
-    <p style={{ margin: 0, color: '#6b7280' }}>{hint ?? 'No data yet.'}</p>
+    <p style={{ margin: 0, color: '#94a3b8' }}>{hint ?? 'No data yet.'}</p>
   </div>
 );
 

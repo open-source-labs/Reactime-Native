@@ -6,23 +6,18 @@ const SimpleTitleHeader: React.FC = () => {
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
-      padding: '16px 24px',
-      borderBottom: '1px solid #e2e8f0',
-      backgroundColor: '#ffffff'
+      padding: '14px 24px',
+      borderBottom: '1px solid #334155',
+      backgroundColor: '#1e293b',
     }}>
-      <img 
-        src="/your-logo.png"  // Replace with your actual logo filename
-        alt="Reactime Native Logo" 
-        style={{
-          height: '32px',
-          width: 'auto'
-        }}
-      />
+      <span style={{ fontSize: '20px', lineHeight: 1 }}>⏱</span>
       <h1 style={{
         margin: 0,
-        fontSize: '20px',
-        fontWeight: 'bold',
-        color: '#1f2937'
+        fontSize: '18px',
+        fontWeight: '600',
+        color: '#14b8a6',
+        letterSpacing: '0.01em',
+        fontFamily: 'var(--font-sans)',
       }}>
         Reactime Native
       </h1>
