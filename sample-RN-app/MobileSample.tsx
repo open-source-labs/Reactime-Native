@@ -1,6 +1,54 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Button, Text, StyleSheet, Pressable } from 'react-native';
 import { logFiber, traverse } from './useFiberTree';
+// ADDED: Helper function to extract component data for Reactime
+function extractComponentSnapshot(fiberRoot: any): any {
+  const components: any[] = [];
+  
+  function walkFiber(node: any) {
+    if (!node) return;
+    
+    const tag = node.tag;
+    if (tag === 0 || tag === 1 || tag === 2 || tag === 10) { // Function/Class components
+      const name = node.elementType?.name || node.elementType?.displayName || 'Anonymous';
+      
+      // Extract state if available
+      let state = {};
+      if (node.memoizedState) {
+        // Simple state extraction - you can make this more sophisticated
+        try {
+          state = {
+            hasState: true,
+            memoizedState: node.memoizedState.memoizedState || 'no memoized state'
+          };
+        } catch (e) {
+          state = { hasState: true, error: 'Could not serialize state' };
+        }
+      }
+      
+      components.push({
+        name,
+        tag,
+        key: node.key,
+        state,
+        props: node.memoizedProps || {}
+      });
+    }
+    
+    walkFiber(node.child);
+    walkFiber(node.sibling);
+  }
+  
+  walkFiber(fiberRoot);
+  return {
+    timestamp: Date.now(),
+    componentTree: components,
+    rootInfo: {
+      type: 'ReactNativeApp',
+      children: components.length
+    }
+  };
+}
 import { WS_URL } from './wsConfig';
 
 export default function App() {
@@ -16,13 +64,11 @@ export default function App() {
 
     socket.onopen = () => {
       console.log('🔌 WS connected');
-      socket.send(
-        JSON.stringify({
-          count: count,
-          letter: letter,
-          timestamp: new Date().toISOString(),
-        })
-      );
+      // CHANGED: Send proper control message instead of raw state
+      socket.send(JSON.stringify({
+        channel: 'control',
+        type: 'ping'
+      }));
     };
     socket.onerror = (e) => {
       console.log('WS error', (e as any).message ?? e);
@@ -32,18 +78,65 @@ export default function App() {
     return () => socket.close();
   }, []);
 
-  /* helper to broadcast the current state */
-  const emit = (nextCount: number, nextLetter: string) => {
+  /* CHANGED: helper to send snapshot data to Reactime */
+  const sendSnapshot = (currentFiberRoot?: any) => {
     const socket = ws.current;
-    if (socket?.readyState === WebSocket.OPEN) {
-      socket.send(
-        JSON.stringify({
-          count: nextCount,
-          letter: nextLetter,
-          timestamp: new Date().toISOString(),
-        })
-      );
+    if (socket?.readyState !== WebSocket.OPEN) return;
+
+    // If we have a fiber root, extract component data
+    let snapshotData;
+    if (currentFiberRoot) {
+      snapshotData = extractComponentSnapshot(currentFiberRoot);
+    } else {
+      // Fallback: send current component state
+      snapshotData = {
+        timestamp: Date.now(),
+        appState: { count, letter },
+        components: [
+          {
+            name: 'App',
+            state: { count, letter },
+            type: 'FunctionComponent'
+          }
+        ]
+      };
     }
+
+    // CHANGED: Send in the format your browser client expects
+    const message = {
+      channel: 'snapshot',
+      type: 'add',
+      payload: snapshotData
+    };
+
+    socket.send(JSON.stringify(message));
+    console.log('📤 Sent snapshot to Reactime');
+  };
+
+  /* ADDED: helper to send performance metrics */
+  const sendMetric = () => {
+    const socket = ws.current;
+    if (socket?.readyState !== WebSocket.OPEN) return;
+
+    const metric = {
+      channel: 'metrics',
+      type: 'commit',
+      payload: {
+        ts: Date.now(),
+        durationMs: Math.random() * 20 + 5, // Simulated commit duration
+        fibersUpdated: Math.floor(Math.random() * 5) + 1,
+        appId: 'react-native-sample'
+      }
+    };
+
+    socket.send(JSON.stringify(metric));
+    console.log('📊 Sent metric to Reactime');
+  };
+
+  // CHANGED: helper to broadcast the current state (now sends proper snapshot format)
+  const emit = (nextCount: number, nextLetter: string) => {
+    // Send snapshot after state update
+    setTimeout(() => sendSnapshot(), 10);
   };
 
   const incCount = () =>
@@ -69,9 +162,11 @@ export default function App() {
 
     console.log('DevTools hook found!', Object.keys(hook));
 
-    /* 1. Stream every commit through logFiber */
+    /* CHANGED: Send snapshot on every React commit */
     hook.onCommitFiberRoot = (_id: any, root: any) => {
-      logFiber(root.current);
+      logFiber(root.current); // Keep your existing logging
+      sendSnapshot(root.current); // ADDED: Send snapshot to Reactime
+      sendMetric(); // ADDED: Send performance metric
     };
 
     /* 2. Walk existing trees once for an initial dump */
@@ -90,7 +185,11 @@ export default function App() {
         continue;
       }
 
-      roots.forEach((r: any) => traverse(r.current));
+      // ADDED: Send initial snapshot
+      roots.forEach((r: any) => {
+        traverse(r.current); // Keep your existing traversal
+        sendSnapshot(r.current); // ADDED: Send initial snapshot
+      });
     }
   }, []);
 

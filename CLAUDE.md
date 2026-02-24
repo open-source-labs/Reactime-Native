@@ -145,6 +145,37 @@ in CI and provide fast feedback during development.
 
 ---
 
+### Decision 7: wsConfig.ts for Dynamic IP Resolution (RN Side)
+**Context:** The RN demo app had a hardcoded IP address (`10.0.0.157`) pointing
+to one developer's laptop. This broke the WebSocket connection on any other
+machine. A previous attempt using Expo's `Constants.manifest` APIs was
+commented out because it wasn't reliable across SDK versions.
+
+**Decision:** Extract IP resolution into a dedicated `wsConfig.ts` module
+with a prioritized fallback chain:
+1. `EXPO_PUBLIC_WS_HOST` env var — explicit override for any machine
+2. `Constants.expoConfig?.hostUri` — Expo Go / dev client auto-detection
+3. `10.0.2.2` on Android — routes to host machine from an emulator
+4. `'localhost'` — safe fallback for iOS simulator
+
+**Rationale:** Centralizing resolution in one file makes the logic auditable
+and testable. Any developer can set `EXPO_PUBLIC_WS_HOST=<their LAN IP>` in
+`.env.local` without touching application code. The fallback chain means it
+works out of the box in most environments with zero config.
+
+**Tradeoff:** Slightly more indirection vs. a one-liner hardcode, but removes
+a class of environment-specific bugs that previously blocked the whole team.
+
+**Follow-up (caught by tests):** Writing the unit tests revealed that the
+initial implementation passed the env var directly into the URL template
+without sanitization. A value like `ws://192.168.1.1` would produce
+`ws://ws://192.168.1.1:8080`; `192.168.1.1:9999` would produce
+`ws://192.168.1.1:9999:8080`. Both are syntactically valid URLs that fail
+silently at connection time. A `sanitizeHost()` helper was added to strip
+any leading scheme and embedded port before interpolation.
+
+---
+
 ### Decision 8: Shift-Left Testing for wsConfig.ts
 **Context:** `WS_URL` is computed at module load time — a silent failure
 (e.g. `ws://undefined:8080` or `ws://:8080`) would pass code review, build
@@ -274,6 +305,62 @@ cross-package imports. The inline slice mirrors the real one and is kept minimal
 
 ---
 
+### Decision 13: TimelineSlider Empty State — Always-Render with Disabled Slider
+**Context:** `TimelineSlider` had an early-return guard that rendered an empty
+state message ("No snapshots available...") when `snapshotsLength === 0`. A unit
+test was written expecting a slider with `max=0` — the test and component were out
+of sync after the guard was added. Two options were evaluated against shift-left
+principles and WCAG 2.1 AA:
+
+- **Option A** — accept the empty state message, update the test to assert it.
+  Shift-left concern: the `safeMax`/`safeValue` boundary math for the zero case
+  becomes untestable (component early-returns before the slider renders).
+  WCAG benefit: a plain `<p>` is semantically clean, no inert interactive elements.
+- **Option B** — always render the slider; pass `disabled` and `aria-label` when
+  `snapshotsLength === 0`. Shift-left benefit: full boundary coverage preserved.
+  WCAG benefit: `aria-label="timeline slider"` satisfies 4.1.2 (Name, Role, Value);
+  `disabled` satisfies 2.1.1 (Keyboard) by making the inert control non-focusable.
+
+**Decision:** Option B. Always render `<Slider>`, pass `disabled={isEmpty}` and
+`aria-label="timeline slider"`. `isEmpty = snapshotsLength === 0`.
+
+**Rationale:** Option B satisfies both requirements simultaneously. The shift-left
+coverage gap in Option A was real — the zero-snapshot boundary case is exactly the
+kind of silent edge case shift-left is meant to catch. Option A without accessibility
+attributes would fail WCAG 4.1.2 and 2.1.1; Option B with attributes satisfies both.
+
+**Tradeoff:** Slightly more component state (`isEmpty` flag, conditional `disabled`
+prop) vs. the simpler early-return. The overhead is minimal; the gain is full test
+coverage of the zero-snapshot math and WCAG 2.1 AA compliance for the slider.
+
+---
+
+### Decision 14: SnapshotView Test Realignment and Anchored Regex Pattern
+**Context:** `SnapshotView` tests were written when the component used `useSelector`.
+After the component was refactored to be props-based (Decision 5), the tests were
+never updated — they mocked `react-redux` (which `SnapshotView` no longer imports)
+and called `render(<SnapshotView />)` with no props. All six tests failed silently:
+rendered `Total: | Index: ` because props were `undefined`.
+
+A secondary issue: non-anchored regex patterns like `/Total:\s*3\s*\|\s*Index:\s*1/i`
+match any element whose `textContent` contains the substring — including parent
+container divs. RTL's `getByText` throws when multiple elements match.
+
+**Decision:** (1) Remove the `react-redux` mock — `SnapshotView` is props-based
+and never imports it. (2) Pass explicit props in each `render()` call, mirroring
+the real call site in `MainContainer`. (3) Use anchored regexes
+(`/^Total:\s*3\s*\|\s*Index:\s*1$/i`) for Total|Index assertions and function
+matchers scoped to `<pre>` for JSON content assertions.
+
+**Rationale:** Aligns tests with the component's actual interface. Tests now
+document exactly what `MainContainer` passes, making them readable as a specification.
+Anchored regexes are the correct RTL pattern when target text appears as a substring
+in parent container `textContent` — they prevent false positives without requiring
+brittle `data-testid` coupling.
+
+**Tradeoff:** Tests are more verbose (explicit props per test vs. shared mock state).
+Each test is now self-contained and readable without cross-referencing mock setup —
+the verbosity is a feature.
 ### Decision 7: wsConfig.ts for Dynamic IP Resolution (RN Side)
 **Context:** The RN demo app had a hardcoded IP address (`10.0.0.157`) pointing
 to one developer's laptop. This broke the WebSocket connection on any other
