@@ -12,15 +12,33 @@
 - **Rationale:** Users (developers) need to know *why* a connection failed, not just that it did. Opaque failures are an accessibility barrier.
 - **WCAG reference:** Success Criterion 4.1.3 (Status Messages) — status messages surfaced without receiving focus
 
+### Timeline Slider — Accessible Name and Disabled State (Decision 13)
+- Added `aria-label="timeline slider"` to `<Slider>` unconditionally
+- Added `disabled={true}` when `snapshotsLength === 0` (slider is inert but always rendered)
+- **Rationale:** An unlabeled slider with no accessible name is invisible to screen
+  readers. An inert but focusable slider that does nothing useful when empty
+  violates keyboard operability expectations. Both attributes together mean the
+  slider is always named and correctly non-interactive when there is no data.
+- **WCAG reference:**
+  - 4.1.2 (Name, Role, Value) — interactive controls must have an accessible name
+  - 2.1.1 (Keyboard) — `disabled` ensures the inert slider is not in the tab order
+- **Engineering note:** This decision was made alongside a shift-left testing
+  concern — see Decision 13 in CLAUDE.md for the full tradeoff analysis.
+
 ---
 
 ## Known Gaps — Future Work
 
-### Keyboard Navigation
-- Timeline scrubber currently relies on mouse interaction
-- **Needed:** Full keyboard operability — arrow keys to step through snapshots
-- **WCAG reference:** Success Criterion 2.1.1 (Keyboard) — all functionality available via keyboard
-- **Status:** Not yet implemented
+### Keyboard Navigation — Snapshot Stepping
+- The timeline slider is now keyboard-accessible (arrow keys move the slider handle)
+  and correctly disabled when no snapshots are loaded
+- **Remaining gap:** No keyboard shortcut to step through snapshots one at a time
+  (e.g. left/right arrow on the timeline panel itself, outside the slider handle)
+- **Needed:** Trap focus or roving tabindex on the timeline panel so developers
+  can step through snapshots without precise slider dragging
+- **WCAG reference:** Success Criterion 2.1.1 (Keyboard) — all functionality
+  available via keyboard
+- **Status:** Partially addressed (slider accessible); stepping UX not yet implemented
 
 ### Screen Reader Support for Timeline
 - Snapshot state diffs are visual only — no ARIA live regions to announce changes

@@ -20,22 +20,14 @@ const TimelineSlider: React.FC = () => {
   const safeMax = Math.max(0, snapshotsLength - 1);
   const safeValue = Math.min(Math.max(0, currentIndex), safeMax);
 
+  const isEmpty = snapshotsLength === 0;
+
   const handleSliderChange: SliderProps['onChange'] = (value) => {
     const next = Array.isArray(value) ? value[0] : value;
     const clamped = Math.min(Math.max(0, next), safeMax);
     dispatch(jumpToSnapshot(clamped));
     dispatch(pauseSnapshots());
   };
-
-  if (snapshotsLength === 0) {
-    return (
-      <div style={{ padding: '8px 0', maxWidth: 640 }}>
-        <p style={{ fontSize: 12, color: '#666', fontStyle: 'italic' }}>
-          No snapshots available. Send test data or connect React Native app.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div style={{ padding: '8px 0', maxWidth: 640 }}>
@@ -44,6 +36,8 @@ const TimelineSlider: React.FC = () => {
         max={safeMax}
         value={safeValue}
         onChange={handleSliderChange}
+        disabled={isEmpty}
+        aria-label='timeline slider'
         handleRender={(node, props) => (
           <Tooltip
             prefixCls='rc-slider-tooltip'

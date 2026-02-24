@@ -35,23 +35,26 @@ type MockSliderProps = {
   max?: number;
   value?: number;
   onChange?: (v: number | number[]) => void;
+  disabled?: boolean;
+  'aria-label'?: string;
 };
 
 vi.mock('rc-slider', () => ({
   default: (props: MockSliderProps) => {
     // replaced `any` with MockSliderProps
-    const { min = 0, max = 100, value = 0, onChange } = props;
+    const { min = 0, max = 100, value = 0, onChange, disabled, 'aria-label': ariaLabel } = props;
     return (
       <input
         role='slider'
         type='range'
-        aria-label='timeline-slider' // added aria-label for clarity
+        aria-label={ariaLabel}
+        disabled={disabled}
         min={String(min)} // cast to string
         max={String(max)} // cast to string
         value={String(value)} // cast to string
         onChange={(e) => {
-          // toggle array/number payload
-          if (!onChange) return;
+          // toggle array/number payload; no-op when slider is disabled
+          if (!onChange || disabled) return;
           if (sliderPayloadMode === 'number') {
             onChange(Number((e.target as HTMLInputElement).value));
           } else {
@@ -99,13 +102,15 @@ describe('TimelineSlider (unit)', () => {
     expect(slider.value).toBe('2');
   });
 
-  test('snapshotsLength=0 => max=0, value=0', () => {
+  test('snapshotsLength=0 => slider renders disabled with max=0, value=0', () => {
     mockState.snapshot.snapshots = [];
     mockState.snapshot.currentIndex = 10;
     render(<TimelineSlider />);
     const slider = screen.getByRole('slider') as HTMLInputElement;
     expect(slider.max).toBe('0');
     expect(slider.value).toBe('0');
+    expect(slider).toBeDisabled();
+    expect(slider).toHaveAttribute('aria-label', 'timeline slider');
   });
 
   test('dispatches jumpToSnapshot(clamped) then pauseSnapshots() when changing beyond max', () => {

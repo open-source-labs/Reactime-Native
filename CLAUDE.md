@@ -145,6 +145,225 @@ in CI and provide fast feedback during development.
 
 ---
 
+### Decision 7: wsConfig.ts for Dynamic IP Resolution (RN Side)
+**Context:** The RN demo app had a hardcoded IP address (`10.0.0.157`) pointing
+to one developer's laptop. This broke the WebSocket connection on any other
+machine. A previous attempt using Expo's `Constants.manifest` APIs was
+commented out because it wasn't reliable across SDK versions.
+
+**Decision:** Extract IP resolution into a dedicated `wsConfig.ts` module
+with a prioritized fallback chain:
+1. `EXPO_PUBLIC_WS_HOST` env var — explicit override for any machine
+2. `Constants.expoConfig?.hostUri` — Expo Go / dev client auto-detection
+3. `10.0.2.2` on Android — routes to host machine from an emulator
+4. `'localhost'` — safe fallback for iOS simulator
+
+**Rationale:** Centralizing resolution in one file makes the logic auditable
+and testable. Any developer can set `EXPO_PUBLIC_WS_HOST=<their LAN IP>` in
+`.env.local` without touching application code. The fallback chain means it
+works out of the box in most environments with zero config.
+
+**Tradeoff:** Slightly more indirection vs. a one-liner hardcode, but removes
+a class of environment-specific bugs that previously blocked the whole team.
+
+**Follow-up (caught by tests):** Writing the unit tests revealed that the
+initial implementation passed the env var directly into the URL template
+without sanitization. A value like `ws://192.168.1.1` would produce
+`ws://ws://192.168.1.1:8080`; `192.168.1.1:9999` would produce
+`ws://192.168.1.1:9999:8080`. Both are syntactically valid URLs that fail
+silently at connection time. A `sanitizeHost()` helper was added to strip
+any leading scheme and embedded port before interpolation.
+
+---
+
+### Decision 8: Shift-Left Testing for wsConfig.ts
+**Context:** `WS_URL` is computed at module load time — a silent failure
+(e.g. `ws://undefined:8080` or `ws://:8080`) would pass code review, build
+successfully, and only surface at runtime on a physical device.
+
+**Decision:** Write unit tests covering all four fallback steps in the
+priority chain, the contract shape (`ws://<host>:8080`), and the three
+silent failure modes before wiring the module into the app.
+
+**Rationale:** These bugs are cheap to catch in CI and expensive to catch
+on a device. Testing the failure modes (`undefined`, empty string, unusual
+port) makes the shift-left intent explicit rather than incidental.
+
+**Tradeoff:** Requires `vi.resetModules()` + `vi.doMock()` + dynamic
+`import()` per test to re-evaluate a module with top-level side effects —
+slightly more setup than standard mocking, but necessary given the
+module's architecture.
+
+---
+
+### Decision 9: Server Refactor for Testability
+**Context:** `server.js` had a top-level side effect — importing the file
+immediately started a WebSocket server on port 8080, binding the port at
+require-time. This made isolated unit testing impossible without spinning up
+a real server for every test run.
+
+**Decision:** Extracted `broadcast(wss, senderWs, parsed)` as a named function,
+wrapped server construction in a `createServer(port, host)` factory, and added
+a `require.main === module` guard to separate library behavior from CLI behavior.
+Added `module.exports = { broadcast, createServer }` to expose both for tests.
+
+**Rationale:** The `require.main === module` pattern is idiomatic Node.js — it's
+what makes npm packages testable without special setup. Extracting `broadcast()`
+allows the routing logic (sender exclusion, non-OPEN client skipping, single-client
+echo) to be tested with mock objects and zero I/O.
+
+**Tradeoff:** Slightly more indirection in the server file, but `broadcast()` is
+now pure and `createServer()` is side-effect-free on import — the cost is minimal
+and the gain in testability is significant.
+
+---
+
+### Decision 10: Layered Server Testing Strategy (Unit + Integration)
+**Context:** Server logic has two distinct failure surfaces: routing algorithm
+correctness (pure logic) and network behavior correctness (real TCP, frame parsing,
+malformed input, disconnect handling).
+
+**Decision:** Two test layers in `server.test.ts`:
+- **Unit tests** — mock `ws` client objects, test `broadcast()` in pure isolation
+- **Integration tests** — real `WebSocketServer` on port 8081, real connections,
+  `beforeEach`/`afterEach` teardown for clean state
+
+**Rationale:** Unit tests catch logic bugs instantly without I/O. Integration tests
+catch seam failures — malformed JSON that crashes the process, connections that
+close mid-message, the single-client echo path under real TCP. Both layers together
+give confidence the unit shipped matches the unit tested.
+
+**Tradeoff:** Integration tests are slower and port-dependent; flaky if port 8081
+is occupied. Mitigated by explicit teardown and a dedicated test port.
+
+---
+
+### Decision 11: React Native Component Testing — RTL over react-test-renderer
+**Context:** `MobileSample.tsx` uses React Native primitives (View, Pressable,
+Text) and opens a native WebSocket connection on mount. Neither works in a Node.js
+test environment. An initial implementation used `react-test-renderer`, but that
+package was deprecated in React 18/19. Three alternatives were evaluated:
+
+1. **`react-test-renderer`** — deprecated; React team explicitly recommends
+   migrating away. Peer dependency version pinning caused install friction
+   (`react@19.1.0` vs. renderer requiring `^19.2.4`).
+2. **`@testing-library/react-native`** — the RTL equivalent for real RN primitives,
+   but requires Babel transforms (`babel-jest`, `babel-preset-react-native`) to
+   handle RN's non-standard JS. Adding Babel inside a Vitest project introduces
+   two competing transform pipelines (esbuild + Babel), which is fragile,
+   poorly documented, and conflicts with Vite's ESM-native architecture.
+3. **`@testing-library/react` + jsdom** — DOM-focused RTL. Works natively with
+   Vitest/esbuild. No Babel required. Compatible with the existing `client/`
+   test setup.
+
+**Decision:** Use `@testing-library/react` with jsdom and a three-part shim
+strategy in `MobileSample.unit.test.tsx`:
+1. **`vi.mock('react-native')`** — replace View/Pressable/Text with DOM-compatible
+   elements (div/button/span); RTL queries against this real DOM via jsdom
+2. **`vi.stubGlobal('WebSocket', MockWebSocket)`** — replace global WebSocket with
+   a vi.fn() factory returning a controllable mock socket
+3. **`vi.mock('./wsConfig')`** — return a fixed URL, no env/Expo/Platform resolution
+
+A `// @vitest-environment jsdom` per-file directive overrides the environment for
+the unit test only, keeping the integration test in `node`.
+
+**Rationale:** Since react-native is already shimmed to DOM elements, the component
+renders as HTML — RTL + jsdom is the natural fit. It stays entirely within the
+Vitest/esbuild ecosystem, requires no Babel config, and matches the toolchain
+already in use in `client/`. Buttons are queried by accessible role + name
+(`getByRole('button', { name: '+1' })`), which is more resilient to refactors
+than internal tree traversal.
+
+**Tradeoff:** Real layout, native gesture handling, and platform-specific rendering
+are not covered. Acceptable for unit testing logic; native behavior requires a
+device or Detox E2E tests.
+
+---
+
+### Decision 12: Three-Layer Integration Test (wsConfig → WebSocket → Redux)
+**Context:** The three layers of the data pipeline (URL resolution, WebSocket
+transport, Redux state update) were tested in isolation but never together.
+A silent composition failure — correct config, correct transport, wrong slice
+dispatch — would not be caught by any existing test.
+
+**Decision:** `websocket.integration.test.ts` validates the full pipeline in one
+test suite, organized by layer:
+- **Layer 1:** `wsConfig` resolves the correct URL from `EXPO_PUBLIC_WS_HOST`
+- **Layer 2:** Real `ws` server on port 8081 + native WebSocket clients for
+  connect, send, broadcast, and sender-exclusion assertions
+- **Layer 3:** Inline `snapshotSlice` + `configureStore` verifying `addSnapshot`
+  updates store state and fires subscribed listeners
+- **Full round trip:** RN client → server broadcast → browser client → Redux store
+
+**Rationale:** Integration tests catch the seams — the points where the layers
+hand off to each other. The round-trip test is the highest-confidence assertion
+we have that the system works as a whole before connecting real devices.
+
+**Tradeoff:** Requires real port binding and teardown; `snapshotSlice` is inlined
+rather than imported from `client/` to keep the test self-contained without
+cross-package imports. The inline slice mirrors the real one and is kept minimal.
+
+---
+
+### Decision 13: TimelineSlider Empty State — Always-Render with Disabled Slider
+**Context:** `TimelineSlider` had an early-return guard that rendered an empty
+state message ("No snapshots available...") when `snapshotsLength === 0`. A unit
+test was written expecting a slider with `max=0` — the test and component were out
+of sync after the guard was added. Two options were evaluated against shift-left
+principles and WCAG 2.1 AA:
+
+- **Option A** — accept the empty state message, update the test to assert it.
+  Shift-left concern: the `safeMax`/`safeValue` boundary math for the zero case
+  becomes untestable (component early-returns before the slider renders).
+  WCAG benefit: a plain `<p>` is semantically clean, no inert interactive elements.
+- **Option B** — always render the slider; pass `disabled` and `aria-label` when
+  `snapshotsLength === 0`. Shift-left benefit: full boundary coverage preserved.
+  WCAG benefit: `aria-label="timeline slider"` satisfies 4.1.2 (Name, Role, Value);
+  `disabled` satisfies 2.1.1 (Keyboard) by making the inert control non-focusable.
+
+**Decision:** Option B. Always render `<Slider>`, pass `disabled={isEmpty}` and
+`aria-label="timeline slider"`. `isEmpty = snapshotsLength === 0`.
+
+**Rationale:** Option B satisfies both requirements simultaneously. The shift-left
+coverage gap in Option A was real — the zero-snapshot boundary case is exactly the
+kind of silent edge case shift-left is meant to catch. Option A without accessibility
+attributes would fail WCAG 4.1.2 and 2.1.1; Option B with attributes satisfies both.
+
+**Tradeoff:** Slightly more component state (`isEmpty` flag, conditional `disabled`
+prop) vs. the simpler early-return. The overhead is minimal; the gain is full test
+coverage of the zero-snapshot math and WCAG 2.1 AA compliance for the slider.
+
+---
+
+### Decision 14: SnapshotView Test Realignment and Anchored Regex Pattern
+**Context:** `SnapshotView` tests were written when the component used `useSelector`.
+After the component was refactored to be props-based (Decision 5), the tests were
+never updated — they mocked `react-redux` (which `SnapshotView` no longer imports)
+and called `render(<SnapshotView />)` with no props. All six tests failed silently:
+rendered `Total: | Index: ` because props were `undefined`.
+
+A secondary issue: non-anchored regex patterns like `/Total:\s*3\s*\|\s*Index:\s*1/i`
+match any element whose `textContent` contains the substring — including parent
+container divs. RTL's `getByText` throws when multiple elements match.
+
+**Decision:** (1) Remove the `react-redux` mock — `SnapshotView` is props-based
+and never imports it. (2) Pass explicit props in each `render()` call, mirroring
+the real call site in `MainContainer`. (3) Use anchored regexes
+(`/^Total:\s*3\s*\|\s*Index:\s*1$/i`) for Total|Index assertions and function
+matchers scoped to `<pre>` for JSON content assertions.
+
+**Rationale:** Aligns tests with the component's actual interface. Tests now
+document exactly what `MainContainer` passes, making them readable as a specification.
+Anchored regexes are the correct RTL pattern when target text appears as a substring
+in parent container `textContent` — they prevent false positives without requiring
+brittle `data-testid` coupling.
+
+**Tradeoff:** Tests are more verbose (explicit props per test vs. shared mock state).
+Each test is now self-contained and readable without cross-referencing mock setup —
+the verbosity is a feature.
+
+---
+
 ## Accessibility
 See [ACCESSIBILITY.md](./ACCESSIBILITY.md) for a full log of accessibility
 decisions made and known gaps with WCAG references.
