@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../store/store';
 import { wsSend, getSocketReadyState } from '../transport/socket';
 import SnapshotView from '../components/SnapshotView';
-import TimelineSlider from '../components/TimelineSlider';
+import TimelineControls from '../components/TimelineControls';
 import MetricsPanel from '../components/MetricsPanel';
 
 const WS_STATE_LABEL: Record<number, string> = { 0: 'CONNECTING…', 1: '✅ OPEN', 2: 'CLOSING…', 3: 'CLOSED' };
@@ -153,14 +153,9 @@ const MainContainer: React.FC = () => {
     <>
       <ConnectionDebugger />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16, height: '100vh' }}>
-        <aside style={{ padding: 12, borderRight: '1px solid #334155' }}>
-          <h3 style={{ margin: '8px 0 12px', color: '#f1f5f9' }}>Timeline</h3>
-          <TimelineSlider />
-        </aside>
-
-        <main style={{ display: 'grid', gridTemplateRows: '1fr auto', gap: 16 }}>
-          <section style={{ padding: 12, overflow: 'auto', borderBottom: '1px solid #334155' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <main style={{ flex: 1, overflow: 'auto', display: 'grid', gridTemplateRows: '1fr auto' }}>
+          <section style={{ padding: 16, overflow: 'auto', borderBottom: '1px solid #334155' }}>
             <SnapshotView
               snapshot={current}
               index={currentIndex}
@@ -168,10 +163,12 @@ const MainContainer: React.FC = () => {
             />
           </section>
 
-          <section style={{ padding: 12 }}>
+          <section style={{ padding: 16 }}>
             <MetricsPanel />
           </section>
         </main>
+
+        <TimelineControls />
       </div>
     </>
   );

@@ -60,6 +60,15 @@ body {
 }
 
 /* ============================================================
+   Interactive controls — focus ring (WCAG 2.4.7 Focus Visible)
+   ============================================================ */
+button:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ============================================================
    rc-slider — focus ring (WCAG 2.4.7 Focus Visible)
    ============================================================ */
 .rc-slider-handle:focus,
