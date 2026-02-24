@@ -7,8 +7,9 @@ import SnapshotView from '../components/SnapshotView';
 import TimelineControls from '../components/TimelineControls';
 import MetricsPanel from '../components/MetricsPanel';
 
-const WS_STATE_LABEL: Record<number, string> = { 0: 'CONNECTING…', 1: '✅ OPEN', 2: 'CLOSING…', 3: 'CLOSED' };
-const WS_STATE_COLOR: Record<number, string> = { 0: '#f59e0b', 1: '#10b981', 2: '#f59e0b', 3: '#ef4444' };
+const WS_STATE_LABEL: Record<number, string>  = { [-1]: 'No WebSocket', 0: ' WS Connecting', 1: 'WS Connected', 2: 'WS Closing', 3: 'WS Closed' };
+const WS_STATE_COLOR: Record<number, string>  = { [-1]: '#ef4444',  0: '#f59e0b',    1: '#10b981',   2: '#f59e0b',  3: '#ef4444' };
+// Contrast ratios on #0f172a bg: red 4.75:1 ✓  amber 8.30:1 ✓  green 7.05:1 ✓  (WCAG AA 4.5:1)
 
 // Inline debug component — remove when no longer needed
 const ConnectionDebugger: React.FC = () => {
@@ -110,8 +111,18 @@ const ConnectionDebugger: React.FC = () => {
     }}>
       <h4 style={{ margin: '0 0 6px 0', color: '#f1f5f9', fontSize: 12, fontWeight: 600 }}>Debug Panel</h4>
 
-      <div style={{ marginBottom: 6, padding: '3px 6px', borderRadius: 4, background: '#0f172a', fontWeight: 600, color: WS_STATE_COLOR[wsState] ?? '#6b7280' }}>
-        WS: {WS_STATE_LABEL[wsState] ?? 'NO SOCKET'}
+      <div
+        role="status"
+        aria-label={`WebSocket status: ${WS_STATE_LABEL[wsState] ?? 'No Socket'}`}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, padding: '3px 6px', borderRadius: 4, background: '#0f172a' }}
+      >
+        <span
+          aria-hidden="true"
+          style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: WS_STATE_COLOR[wsState] ?? '#ef4444', flexShrink: 0 }}
+        />
+        <span style={{ fontWeight: 600, color: WS_STATE_COLOR[wsState] ?? '#ef4444' }}>
+          {WS_STATE_LABEL[wsState] ?? 'No Socket'}
+        </span>
       </div>
 
       <div style={statsGrid}>
