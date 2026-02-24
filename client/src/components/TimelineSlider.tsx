@@ -30,7 +30,7 @@ const TimelineSlider: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '8px 0', maxWidth: 640 }}>
+    <div role="group" aria-label="Snapshot timeline" style={{ padding: '8px 0', maxWidth: 640 }}>
       <Slider
         min={0}
         max={safeMax}
