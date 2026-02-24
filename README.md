@@ -78,11 +78,34 @@ The frontend debugger UI then reconstructs these snapshots into a timeline view.
 
 ---
 
+## Running Tests
+
+Each package has its own Vitest config with environment-specific settings
+(`jsdom` for the browser client, `node` + React Native stubs for the RN app).
+**Do not run `npx vitest` from the repo root** — there is no root-level config,
+so Vitest will pick up all test files without the correct environments and
+produce misleading failures.
+
+Use the per-package scripts instead:
+
+```bash
+# Browser client tests (jsdom environment)
+npm run test:client
+
+# React Native app tests (node environment + RN stubs)
+npm run test:rn
+
+# Both in sequence
+npm test
+```
+
+---
+
 ## Getting Started (Dev Setup)
 
 > ⚠️ MVP still in progress — setup may change.
 
-1. Clone the repo.  
+1. Clone the repo.
 2. Start the project:
    ```bash
     // 1) WebSocket server
