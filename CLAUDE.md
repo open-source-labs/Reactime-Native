@@ -361,6 +361,34 @@ brittle `data-testid` coupling.
 **Tradeoff:** Tests are more verbose (explicit props per test vs. shared mock state).
 Each test is now self-contained and readable without cross-referencing mock setup —
 the verbosity is a feature.
+### Decision 7: wsConfig.ts for Dynamic IP Resolution (RN Side)
+**Context:** The RN demo app had a hardcoded IP address (`10.0.0.157`) pointing
+to one developer's laptop. This broke the WebSocket connection on any other
+machine. A previous attempt using Expo's `Constants.manifest` APIs was
+commented out because it wasn't reliable across SDK versions.
+
+**Decision:** Extract IP resolution into a dedicated `wsConfig.ts` module
+with a prioritized fallback chain:
+1. `EXPO_PUBLIC_WS_HOST` env var — explicit override for any machine
+2. `Constants.expoConfig?.hostUri` — Expo Go / dev client auto-detection
+3. `10.0.2.2` on Android — routes to host machine from an emulator
+4. `'localhost'` — safe fallback for iOS simulator
+
+**Rationale:** Centralizing resolution in one file makes the logic auditable
+and testable. Any developer can set `EXPO_PUBLIC_WS_HOST=<their LAN IP>` in
+`.env.local` without touching application code. The fallback chain means it
+works out of the box in most environments with zero config.
+
+**Tradeoff:** Slightly more indirection vs. a one-liner hardcode, but removes
+a class of environment-specific bugs that previously blocked the whole team.
+
+**Follow-up (caught by tests):** Writing the unit tests revealed that the
+initial implementation passed the env var directly into the URL template
+without sanitization. A value like `ws://192.168.1.1` would produce
+`ws://ws://192.168.1.1:8080`; `192.168.1.1:9999` would produce
+`ws://192.168.1.1:9999:8080`. Both are syntactically valid URLs that fail
+silently at connection time. A `sanitizeHost()` helper was added to strip
+any leading scheme and embedded port before interpolation.
 
 ---
 

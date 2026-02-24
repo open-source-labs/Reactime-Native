@@ -11,6 +11,7 @@
 - Explicit error messages surfaced in the UI rather than silent failures
 - **Rationale:** Users (developers) need to know *why* a connection failed, not just that it did. Opaque failures are an accessibility barrier.
 - **WCAG reference:** Success Criterion 4.1.3 (Status Messages) — status messages surfaced without receiving focus
+- **Test coverage:** `server.test.ts` integration tests verify that malformed JSON from a client does not crash the server process — the server must stay alive to surface error state rather than failing silently. `websocket.integration.test.ts` verifies the message pipeline delivers data that could trigger error UI in the browser client.
 
 ### Timeline Slider — Accessible Name and Disabled State (Decision 13)
 - Added `aria-label="timeline slider"` to `<Slider>` unconditionally
