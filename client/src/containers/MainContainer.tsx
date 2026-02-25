@@ -135,19 +135,19 @@ const ConnectionDebugger: React.FC = () => {
         <span>First Renders:</span><span>{firstRenders.length}</span>
       </div>
 
-      <button onClick={sendTestSnapshot} style={{ ...btnBase, background: '#3b82f6' }}>
+      <button tabIndex={-1} onClick={sendTestSnapshot} style={{ ...btnBase, background: '#3b82f6' }}>
         Test Snapshot
       </button>
 
-      <button onClick={sendTestCommitMetric} style={{ ...btnBase, background: '#10b981' }}>
+      <button tabIndex={-1} onClick={sendTestCommitMetric} style={{ ...btnBase, background: '#10b981' }}>
         Test Commit Metric
       </button>
 
-      <button onClick={sendTestLagMetric} style={{ ...btnBase, background: '#f59e0b' }}>
+      <button tabIndex={-1} onClick={sendTestLagMetric} style={{ ...btnBase, background: '#f59e0b' }}>
         Test Lag Metric
       </button>
 
-      <button onClick={sendTestFirstRenderMetric} style={{ ...btnBase, background: '#8b5cf6', marginBottom: 0 }}>
+      <button tabIndex={-1} onClick={sendTestFirstRenderMetric} style={{ ...btnBase, background: '#8b5cf6', marginBottom: 0 }}>
         Test First Render
       </button>
     </div>
@@ -155,6 +155,13 @@ const ConnectionDebugger: React.FC = () => {
 };
 
 type SnapshotTab = 'snapshot' | 'diff' | 'tree';
+
+const TAB_ORDER: SnapshotTab[] = ['snapshot', 'diff', 'tree'];
+const TAB_IDS: Record<SnapshotTab, string> = {
+  snapshot: 'tab-snapshot',
+  diff:     'tab-diff',
+  tree:     'tab-tree',
+};
 
 const MainContainer: React.FC = () => {
   const { snapshots, currentIndex } = useSelector((s: RootState) => s.snapshot);
@@ -176,53 +183,91 @@ const MainContainer: React.FC = () => {
     transition: 'color var(--transition), border-color var(--transition)',
   });
 
+  const handleTabKeyDown = (e: React.KeyboardEvent, tab: SnapshotTab) => {
+    const idx = TAB_ORDER.indexOf(tab);
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      const next = TAB_ORDER[(idx + 1) % TAB_ORDER.length];
+      setActiveTab(next);
+      document.getElementById(TAB_IDS[next])?.focus();
+    }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prevTab = TAB_ORDER[(idx - 1 + TAB_ORDER.length) % TAB_ORDER.length];
+      setActiveTab(prevTab);
+      document.getElementById(TAB_IDS[prevTab])?.focus();
+    }
+  };
+
   return (
     <>
       <ConnectionDebugger />
 
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <main style={{ flex: 1, overflow: 'auto', display: 'grid', gridTemplateRows: '1fr auto' }}>
+        <main style={{ flex: 1, overflow: 'hidden', display: 'grid', gridTemplateRows: '2fr 1fr' }}>
           <section style={{ padding: 16, overflow: 'auto', borderBottom: '1px solid #334155' }}>
-            <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #334155', marginBottom: 12 }}>
+            <div
+              role="tablist"
+              aria-label="Snapshot views"
+              style={{ display: 'flex', gap: 0, borderBottom: '1px solid #334155', marginBottom: 12 }}
+            >
               <button
+                id={TAB_IDS['snapshot']}
+                role="tab"
+                aria-selected={activeTab === 'snapshot'}
+                tabIndex={activeTab === 'snapshot' ? 0 : -1}
                 style={tabBtn('snapshot')}
                 onClick={() => setActiveTab('snapshot')}
-                aria-pressed={activeTab === 'snapshot'}
+                onKeyDown={(e) => handleTabKeyDown(e, 'snapshot')}
               >
                 Snapshot
               </button>
               <button
+                id={TAB_IDS['diff']}
+                role="tab"
+                aria-selected={activeTab === 'diff'}
+                tabIndex={activeTab === 'diff' ? 0 : -1}
                 style={tabBtn('diff')}
                 onClick={() => setActiveTab('diff')}
-                aria-pressed={activeTab === 'diff'}
+                onKeyDown={(e) => handleTabKeyDown(e, 'diff')}
               >
                 Diff
               </button>
               <button
+                id={TAB_IDS['tree']}
+                role="tab"
+                aria-selected={activeTab === 'tree'}
+                tabIndex={activeTab === 'tree' ? 0 : -1}
                 style={tabBtn('tree')}
                 onClick={() => setActiveTab('tree')}
-                aria-pressed={activeTab === 'tree'}
+                onKeyDown={(e) => handleTabKeyDown(e, 'tree')}
               >
                 Tree
               </button>
             </div>
 
             {activeTab === 'snapshot' && (
-              <SnapshotView
-                snapshot={current}
-                index={currentIndex}
-                total={snapshots.length}
-              />
+              <div role="tabpanel" aria-labelledby={TAB_IDS['snapshot']}>
+                <SnapshotView
+                  snapshot={current}
+                  index={currentIndex}
+                  total={snapshots.length}
+                />
+              </div>
             )}
             {activeTab === 'diff' && (
-              <SnapshotDiff prev={prev} curr={current} />
+              <div role="tabpanel" aria-labelledby={TAB_IDS['diff']}>
+                <SnapshotDiff prev={prev} curr={current} />
+              </div>
             )}
             {activeTab === 'tree' && (
-              <ComponentTree snapshot={current} prevSnapshot={prev} />
+              <div role="tabpanel" aria-labelledby={TAB_IDS['tree']}>
+                <ComponentTree snapshot={current} prevSnapshot={prev} />
+              </div>
             )}
           </section>
 
-          <section style={{ padding: 16 }}>
+          <section style={{ padding: 16, overflow: 'auto' }}>
             <MetricsPanel />
           </section>
         </main>
