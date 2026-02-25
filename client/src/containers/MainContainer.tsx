@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../store/store';
 import { wsSend, getSocketReadyState } from '../transport/socket';
 import SnapshotView from '../components/SnapshotView';
+import SnapshotDiff from '../components/SnapshotDiff';
 import TimelineControls from '../components/TimelineControls';
 import MetricsPanel from '../components/MetricsPanel';
 
@@ -152,13 +153,27 @@ const ConnectionDebugger: React.FC = () => {
   );
 };
 
+type SnapshotTab = 'snapshot' | 'diff';
+
 const MainContainer: React.FC = () => {
   const { snapshots, currentIndex } = useSelector((s: RootState) => s.snapshot);
   const current = snapshots[currentIndex] ?? null;
+  const prev    = snapshots[currentIndex - 1] ?? null;
 
-  console.log('📦 snapshots:', snapshots);
-  console.log('📍 currentIndex:', currentIndex);
-  console.log('📸 current:', current);
+  const [activeTab, setActiveTab] = useState<SnapshotTab>('snapshot');
+
+  const tabBtn = (tab: SnapshotTab): React.CSSProperties => ({
+    padding: '4px 12px',
+    fontSize: 12,
+    fontFamily: 'var(--font-sans)',
+    fontWeight: activeTab === tab ? 600 : 400,
+    color: activeTab === tab ? '#14b8a6' : '#94a3b8',
+    background: 'transparent',
+    border: 'none',
+    borderBottom: activeTab === tab ? '2px solid #14b8a6' : '2px solid transparent',
+    cursor: 'pointer',
+    transition: 'color var(--transition), border-color var(--transition)',
+  });
 
   return (
     <>
@@ -167,11 +182,32 @@ const MainContainer: React.FC = () => {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
         <main style={{ flex: 1, overflow: 'auto', display: 'grid', gridTemplateRows: '1fr auto' }}>
           <section style={{ padding: 16, overflow: 'auto', borderBottom: '1px solid #334155' }}>
-            <SnapshotView
-              snapshot={current}
-              index={currentIndex}
-              total={snapshots.length}
-            />
+            <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #334155', marginBottom: 12 }}>
+              <button
+                style={tabBtn('snapshot')}
+                onClick={() => setActiveTab('snapshot')}
+                aria-pressed={activeTab === 'snapshot'}
+              >
+                Snapshot
+              </button>
+              <button
+                style={tabBtn('diff')}
+                onClick={() => setActiveTab('diff')}
+                aria-pressed={activeTab === 'diff'}
+              >
+                Diff
+              </button>
+            </div>
+
+            {activeTab === 'snapshot' ? (
+              <SnapshotView
+                snapshot={current}
+                index={currentIndex}
+                total={snapshots.length}
+              />
+            ) : (
+              <SnapshotDiff prev={prev} curr={current} />
+            )}
           </section>
 
           <section style={{ padding: 16 }}>
