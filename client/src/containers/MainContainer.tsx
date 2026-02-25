@@ -5,6 +5,7 @@ import type { RootState } from '../store/store';
 import { wsSend, getSocketReadyState } from '../transport/socket';
 import SnapshotView from '../components/SnapshotView';
 import SnapshotDiff from '../components/SnapshotDiff';
+import ComponentTree from '../components/ComponentTree';
 import TimelineControls from '../components/TimelineControls';
 import MetricsPanel from '../components/MetricsPanel';
 
@@ -153,7 +154,7 @@ const ConnectionDebugger: React.FC = () => {
   );
 };
 
-type SnapshotTab = 'snapshot' | 'diff';
+type SnapshotTab = 'snapshot' | 'diff' | 'tree';
 
 const MainContainer: React.FC = () => {
   const { snapshots, currentIndex } = useSelector((s: RootState) => s.snapshot);
@@ -197,16 +198,27 @@ const MainContainer: React.FC = () => {
               >
                 Diff
               </button>
+              <button
+                style={tabBtn('tree')}
+                onClick={() => setActiveTab('tree')}
+                aria-pressed={activeTab === 'tree'}
+              >
+                Tree
+              </button>
             </div>
 
-            {activeTab === 'snapshot' ? (
+            {activeTab === 'snapshot' && (
               <SnapshotView
                 snapshot={current}
                 index={currentIndex}
                 total={snapshots.length}
               />
-            ) : (
+            )}
+            {activeTab === 'diff' && (
               <SnapshotDiff prev={prev} curr={current} />
+            )}
+            {activeTab === 'tree' && (
+              <ComponentTree snapshot={current} prevSnapshot={prev} />
             )}
           </section>
 
