@@ -67,6 +67,19 @@ sequenceDiagram
 
 ---
 
+## Key Features
+
+- **WebSocket relay** — real-time, bidirectional bridge between the RN app and browser debugger using the native WebSocket API (no Socket.IO)
+- **Redux Toolkit** — centralized snapshot history, timeline index, and performance metrics shared across all browser UI components via feature slices
+- **TypeScript strict mode** — end-to-end typed: RN middleware, WebSocket server contracts, Redux slices, and all browser UI components
+- **Snapshot diff view** — color-coded line-level diff between consecutive snapshots (added / removed / changed / unchanged) with recursive nested object support
+- **Component tree** — collapsible component hierarchy rendered from snapshot data; nodes with state changes highlighted with a visual badge
+- **Keyboard accessibility (WCAG 2.1.1)** — timeline scrubber supports arrow key navigation; component tree supports ArrowRight/Left/Enter/Space; all interactive controls have visible focus rings
+- **Vitest test suite** — unit and integration tests across all three packages with environment-specific configs (jsdom for browser client, node for RN + server)
+- **Dynamic IP resolution** — `wsConfig.ts` fallback chain (`EXPO_PUBLIC_WS_HOST` → Expo hostUri → Android emulator → localhost) eliminates hardcoded IPs across dev environments
+
+---
+
 ## Fiber: What We're Capturing
 
 React uses an internal **Fiber tree** to track every component instance.
@@ -154,26 +167,17 @@ npm test
 
 ## Roadmap / Planned Features
 
-- **Component tree visualization**
-  Display the React component hierarchy with props/state at each node.
+### Shipped
+- **Component tree visualization** — collapsible component hierarchy with changed-state highlighting
+- **Snapshot diff view** — color-coded line-level diff between consecutive snapshots (added / removed / changed)
+- **Timeline controls** — play/pause, speed control (0.5x / 1x / 2x), keyboard navigation
 
-- **Snapshot diffing**
-  Highlight what changed between two consecutive states.
-
-- **Expanded metrics**
-  Track fibers updated per commit, event loop lag, and app-level profiling.
-
-- **Snapshot persistence**
-  Optionally store history to disk for long debugging sessions.
-
-- **Bidirectional time-travel**
-  Replay state back into the running RN app.
-
-- **UI polish**
-  Better timeline controls, filtering, and visualization.
-
-- **Packaging & distribution**
-  Publish as an npm package for easy setup with any RN project.
+### Planned
+- **Full fiber tree capture** — serialize the complete React component tree (props + state at every node), not just stateful nodes; Will's `feat/fiber-capture` branch
+- **Bidirectional time-travel** — replay state back into the running RN app
+- **Expanded metrics** — fibers updated per commit, event loop lag, app-level profiling
+- **Snapshot persistence** — optionally store history to disk for long debugging sessions
+- **Packaging & distribution** — publish as an npm package for easy setup with any RN project
 
 ---
 

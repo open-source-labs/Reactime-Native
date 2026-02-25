@@ -17,8 +17,11 @@ and debug state management issues.
 - **Networking:** Fixed and implemented bidirectional WebSocket data flow,
   dynamic IP resolution, auto-reconnect with exponential backoff,
   connection status visibility in UI
-- **UI components:** Built snapshot, scrubber, and metrics components,
-  rendered data stream simulation in browser
+- **UI components:** Built snapshot viewer, timeline scrubber and playback controls,
+  metrics panel, snapshot diff view, component tree visualization, and connection
+  status indicator; rendered data stream simulation in browser
+- **Accessibility:** WCAG 2.1 AA compliance — keyboard navigation (2.1.1),
+  focus visibility (2.4.7), name/role/value (4.1.2), use of color (1.4.1)
 
 **Ansara**
 - **Infrastructure:** npm package creation
@@ -361,34 +364,96 @@ brittle `data-testid` coupling.
 **Tradeoff:** Tests are more verbose (explicit props per test vs. shared mock state).
 Each test is now self-contained and readable without cross-referencing mock setup —
 the verbosity is a feature.
-### Decision 7: wsConfig.ts for Dynamic IP Resolution (RN Side)
-**Context:** The RN demo app had a hardcoded IP address (`10.0.0.157`) pointing
-to one developer's laptop. This broke the WebSocket connection on any other
-machine. A previous attempt using Expo's `Constants.manifest` APIs was
-commented out because it wasn't reliable across SDK versions.
 
-**Decision:** Extract IP resolution into a dedicated `wsConfig.ts` module
-with a prioritized fallback chain:
-1. `EXPO_PUBLIC_WS_HOST` env var — explicit override for any machine
-2. `Constants.expoConfig?.hostUri` — Expo Go / dev client auto-detection
-3. `10.0.2.2` on Android — routes to host machine from an emulator
-4. `'localhost'` — safe fallback for iOS simulator
+---
 
-**Rationale:** Centralizing resolution in one file makes the logic auditable
-and testable. Any developer can set `EXPO_PUBLIC_WS_HOST=<their LAN IP>` in
-`.env.local` without touching application code. The fallback chain means it
-works out of the box in most environments with zero config.
+### Decision 15: TimelineControls — Stale Closure Prevention via useRef
+**Context:** The play/pause interval needs to read `currentIndex` and
+`snapshotsLength` at callback execution time. Both are Redux state values;
+reading them directly inside `setInterval` produces stale closures — the
+callback captures the values at creation time, not when it fires. The
+interval ID itself cannot live in Redux because timer IDs are not serializable.
 
-**Tradeoff:** Slightly more indirection vs. a one-liner hardcode, but removes
-a class of environment-specific bugs that previously blocked the whole team.
+**Decision:** Store `currentIndex` and `snapshotsLength` in refs
+(`currentIndexRef`, `snapshotsLengthRef`) updated on every render via
+`useEffect`. The interval callback reads from refs. The interval ID lives
+in `intervalRef`, not Redux state.
 
-**Follow-up (caught by tests):** Writing the unit tests revealed that the
-initial implementation passed the env var directly into the URL template
-without sanitization. A value like `ws://192.168.1.1` would produce
-`ws://ws://192.168.1.1:8080`; `192.168.1.1:9999` would produce
-`ws://192.168.1.1:9999:8080`. Both are syntactically valid URLs that fail
-silently at connection time. A `sanitizeHost()` helper was added to strip
-any leading scheme and embedded port before interpolation.
+**Rationale:** Refs are synchronously updated before the next timer tick.
+This pattern is more predictable than `useCallback` with deps because it
+doesn't recreate the interval on every state change, eliminating the risk
+of missing a tick during rapid state updates.
+
+**Tradeoff:** More verbose component state (three refs) vs. `useCallback`.
+The explicit refs make the stale-closure problem and its solution visible
+to the next developer — a deliberate documentation choice.
+
+---
+
+### Decision 16: diffSnapshots — Arrays Treated as Atomic, Objects Diffed Recursively
+**Context:** State values may include arrays. Diffing arrays element-by-element
+requires an LCS algorithm to handle insertions, deletions, and reordering —
+significant complexity for minimal benefit in a debugging tool where the
+typical state shape is primitive values and plain objects.
+
+**Decision:** Arrays are compared atomically via `JSON.stringify`. A changed
+array appears as a single `changed` node with `prevValue`/`nextValue`. Plain
+objects are diffed recursively. An `isPlainObject` guard cleanly separates
+the two cases.
+
+**Rationale:** Recursive object diffing covers the common case with high
+signal. Array element diffing is rare in simple RN app state and expensive
+to implement correctly. Upgrading to LCS-based array diffing in a future
+iteration requires touching only `diffSnapshots.ts`.
+
+**Tradeoff:** Large array changes show as a single node rather than
+per-element diff. Acceptable for alpha; the `isPlainObject` boundary is the
+correct extension point when LCS diffing is added.
+
+---
+
+### Decision 17: normalizeFiberSnapshot — Adapter Pattern Decouples ComponentTree from Raw Data Shape
+**Context:** `ComponentTree` needs a `FiberNode[]` tree structure. Current
+snapshot data is a flat object (`{ count: 5, letter: 'b' }`). Will's fiber
+serialization work (in progress on `feat/fiber-capture`) will produce a
+different shape. Building `ComponentTree` directly against the current flat
+shape would require a full refactor when Will's work lands.
+
+**Decision:** Extract `normalizeFiberSnapshot.ts` as an adapter layer between
+raw snapshot payloads and the `FiberNode` type consumed by `ComponentTree`.
+The adapter handles three shapes: future fiber tree (`name` + `children[]`),
+debug panel shape (`component` + `state` + `props`), and flat RN state.
+
+**Rationale:** Adapter pattern isolates the data transformation concern.
+`ComponentTree`, its tests, and all visual behavior remain stable regardless
+of the raw snapshot shape. Only the adapter file needs updating when Will's
+fiber tree serialization lands — documented explicitly in the file header.
+
+**Tradeoff:** One extra indirection layer. The tradeoff deliberately favors
+future-proofing because Will's shape change is a known, imminent event.
+
+---
+
+### Decision 18: ComponentTree WCAG — APG Tree Widget Keyboard Pattern
+**Context:** The collapsible component tree is an interactive widget. WCAG
+2.1.1 (Keyboard) requires all functionality to be available via keyboard.
+Screen readers expose tree widgets with specific expectations: arrow keys to
+navigate and expand/collapse, Enter/Space to toggle.
+
+**Decision:** Each node header handles `onKeyDown` with ArrowRight (expand),
+ArrowLeft (collapse), Enter/Space (toggle). Roles: `role="tree"` on the
+container, `role="treeitem"` on each node, `role="group"` on child lists.
+`tabIndex={0}` on all visible node headers. `aria-expanded` on nodes with
+children.
+
+**Rationale:** Follows the ARIA Authoring Practices Guide (APG) tree widget
+pattern. A fully keyboard-navigable tree signals accessibility maturity beyond
+what most debugger tools implement.
+
+**Tradeoff:** `tabIndex={0}` on every node header means Tab cycles through all
+visible nodes — APG recommends roving `tabIndex` for large trees. Acceptable
+for alpha; roving `tabIndex` is a known improvement for when the full fiber
+tree lands and node counts grow significantly.
 
 ---
 
