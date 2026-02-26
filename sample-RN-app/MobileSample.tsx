@@ -18,9 +18,13 @@ export default function App() {
       console.log('🔌 WS connected');
       socket.send(
         JSON.stringify({
-          count: count,
-          letter: letter,
-          timestamp: new Date().toISOString(),
+          channel: 'snapshot',
+          type: 'add',
+          payload: {
+            count: count,
+            letter: letter,
+            timestamp: new Date().toISOString(),
+          },
         })
       );
     };
@@ -38,9 +42,13 @@ export default function App() {
     if (socket?.readyState === WebSocket.OPEN) {
       socket.send(
         JSON.stringify({
-          count: nextCount,
-          letter: nextLetter,
-          timestamp: new Date().toISOString(),
+          channel: 'snapshot',
+          type: 'add',
+          payload: {
+            count: nextCount,
+            letter: nextLetter,
+            timestamp: new Date().toISOString(),
+          },
         })
       );
     }
