@@ -9,16 +9,23 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "expo": "~53.0.20",
-    "expo-status-bar": "~2.2.3",
-    "react": "19.0.0",
-    "react-native": "0.79.5",
+    "@expo/ngrok": "^4.0.0",
+    "expo": "~54.0.0",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
     "ws": "^8.18.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~19.0.10",
-    "typescript": "~5.8.3"
+    "@reduxjs/toolkit": "^2.11.2",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "~19.1.10",
+    "@types/ws": "^8.18.1",
+    "jsdom": "^28.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.18"
   },
   "private": true
 }
