@@ -490,6 +490,50 @@ keyboard users).
 
 ---
 
+### Decision 20: Serialized JSON Snapshots Over In-Memory Objects
+**Context:** Snapshots of the React Fiber tree need to travel from the React Native
+app, through a Node.js WebSocket server, to a browser UI. These three environments
+share no memory space. A format had to be chosen for snapshot data in transit and
+at rest in the Redux store.
+
+**Decision:** Serialize all Fiber tree snapshots to JSON before transmission and
+storage. Do not pass in-memory JavaScript objects through the pipeline.
+
+**Rationale:** JSON is the lingua franca of cross-runtime communication — universal,
+human-readable, debuggable, and works across all three environments without additional
+dependencies. Serialization also makes snapshots portable artifacts: they can be
+saved, shared, or logged for async debugging.
+
+**Known limitation:** React Fiber nodes contain non-serializable values (functions,
+class instances, circular references). Preprocessing strips or replaces these before
+serialization. This step is a potential source of data loss — some Fiber properties
+may be omitted. When working on snapshot serialization, verify that the output shape
+is complete and strip only what is strictly necessary.
+
+**Tradeoff:** JSON is verbose. Complex or deeply nested Fiber trees can produce large
+payloads. Acceptable at current MVP scale; snapshot diffing or compression may be
+warranted at larger scale.
+
+---
+
+### Decision 21: TypeScript Strict Mode
+**Context:** The codebase was initially written with permissive TypeScript — many
+implicit `any` types, especially around Fiber tree traversal functions and WebSocket
+event handlers. This made the code easier to write initially but harder to maintain
+and refactor safely.
+
+**Decision:** `"strict": true` in tsconfig. All new code must satisfy strict mode.
+Implicit `any` is not acceptable except where React internals are genuinely untyped.
+
+**Rationale:** Fiber node properties (`memoizedState`, `child`, `sibling`,
+`elementType`) do not always exist. Strict mode forces explicit null handling at
+compile time, surfacing potential runtime crashes before they happen. Type coverage
+after migration: **91.72% across 2,599 type nodes**. The remaining ~8% is intentional
+`any` on Fiber properties where the React internals provide no type information.
+
+**Tradeoff:** All new code requires explicit null guards, interface definitions, and
+typed action payloads. Default to explicit types over inference in ambiguous cases
+when generating code for this codebase.
 ### Decision 20: `aria-disabled` over `disabled` on Timeline Control Buttons
 **Context:** Play, Back, and Forward buttons in `TimelineControls` used the
 HTML `disabled` attribute to communicate an inactive state when no snapshots
