@@ -457,6 +457,39 @@ tree lands and node counts grow significantly.
 
 ---
 
+### Decision 19: LagMetrics Display — Scrollable List over Carousel or Windowed View
+**Context:** LagMetrics appended new items to an unbounded list, causing the
+CommitMetrics table to be pushed down the page as lag samples accumulated.
+Three options were evaluated to contain the component to a fixed height.
+
+**Alternatives considered:**
+1. **Fixed-height windowed list (`overflow: hidden`)** — Static container, 3 items
+   visible, no scroll. Rejected: `overflow: hidden` creates an inconsistency — screen
+   reader users traverse all DOM nodes and access all items, while sighted users can
+   only see 3 with no mechanism to reach older entries. Fails WCAG 1.3.1 (information
+   not equally accessible to all users).
+2. **Single-item vertical carousel** — Shows one item at a time; auto-advances or
+   manual prev/next. Rejected: auto-advancing violates WCAG 2.2.2 (Pause, Stop, Hide)
+   without a pause control. Manual-only adds interaction burden and sacrifices trend
+   context — seeing 3 readings (`52ms → 14ms → 48ms`) is more useful for debugging
+   than a single isolated value.
+3. **Fixed-height scrollable list** — Selected.
+
+**Decision:** Wrap `<ol>` in a `div` with `overflowY: 'auto'`, `maxHeight`, and
+`tabIndex={0}`. Add `aria-label` naming the region.
+
+**Rationale:** WCAG 2.1.1 requires all content to be keyboard-reachable. WCAG 1.3.1
+requires information to be equally accessible to all users. The scrollable container
+satisfies both. The stats summary (avg, max, count) above the list gives aggregate
+context without requiring any scrolling.
+
+**Tradeoff:** `tabIndex={0}` on a non-semantic wrapper div adds a tab stop that isn't
+a native interactive element. Mitigated by `aria-label` (names the region for AT) and
+the global `div[tabindex="0"]:focus-visible` rule (visible focus ring for sighted
+keyboard users).
+
+---
+
 ## Accessibility
 See [ACCESSIBILITY.md](./ACCESSIBILITY.md) for a full log of accessibility
 decisions made and known gaps with WCAG references.

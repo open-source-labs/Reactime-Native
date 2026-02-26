@@ -28,6 +28,35 @@
 - **Rationale:** An unlabeled slider is invisible to screen readers. The wrapper group label gives screen reader users context before they encounter the handle.
 - **Engineering note:** See Decision 13 in CLAUDE.md for the shift-left + WCAG tradeoff analysis.
 
+#### 2.1.1 Keyboard — Tab Widget (Snapshot / Diff / Tree)
+- Snapshot view tabs upgraded from `aria-pressed` (toggle button) to the ARIA tab widget pattern
+- `role="tablist"` + `aria-label="Snapshot views"` on the tab container
+- `role="tab"` + `aria-selected` on each button; roving `tabIndex` (active tab = `tabIndex={0}`, inactive = `tabIndex={-1}`)
+- `onKeyDown` handles `ArrowRight` / `ArrowLeft` — cycles focus and activates the adjacent tab; arrow keys do not move focus outside the tablist
+- **WCAG:** SC 2.1.1 — all functionality available via keyboard
+
+#### 2.4.3 Focus Order — Tab Widget + Debug Panel
+- Roving `tabIndex` on tab buttons means Tab enters the group at the active tab and exits without traversing inactive tabs — matches user expectation for a tab widget
+- Debug panel buttons set to `tabIndex={-1}` — the fixed-position panel is position: fixed in the DOM before the main UI, so without this its buttons would be the first Tab stop on the page, before the navigation controls
+- **WCAG:** SC 2.4.3 — focus order preserves meaning and operability
+
+#### 4.1.2 Name, Role, Value — Tab Widget
+- `role="tablist"` / `role="tab"` / `role="tabpanel"` applied to tab container, buttons, and panel wrappers respectively
+- `aria-selected` state on each tab button (replaces `aria-pressed`)
+- `aria-labelledby` on each panel pointing to its tab button `id` — screen readers announce which tab the panel belongs to when focus enters it
+- **WCAG:** SC 4.1.2 — name, role, and value are programmatically determinable
+
+#### 2.4.7 Focus Visible — Scroll Container Focus Ring
+- `div[tabindex="0"]:focus-visible` rule added to `global.scss` — teal 2px outline on the CommitMetrics table wrapper and LagMetrics list wrapper when keyboard-focused
+- **WCAG:** SC 2.4.7 — keyboard focus indicator is visible
+
+#### 2.1.1 Keyboard — Scrollable Metrics Containers
+- CommitMetrics table and LagMetrics list wrapped in `tabIndex={0}` divs with `aria-label`
+- Keyboard users Tab to the container and use Page Down / arrow keys to scroll
+- Preferred over `overflow: hidden` (which hides content from sighted users) and auto-advancing carousel (which requires a WCAG 2.2.2 pause control)
+- **WCAG:** SC 2.1.1 — all content reachable by keyboard; SC 1.3.1 — information equally accessible to all users
+- **Engineering note:** See Decision 19 in CLAUDE.md for the three-option analysis.
+
 #### 2.1.1 Keyboard — Timeline Scrubber
 - Arrow keys on the slider handle step through snapshots one index at a time
 - rc-slider's native `onKeyDown` fires `onChange` → `handleSliderChange` → `dispatch(jumpToSnapshot)` — the Redux store updates on every keystroke
@@ -51,11 +80,6 @@
 ---
 
 ### Planned
-
-#### 2.4.3 Focus Order
-- Focus behavior when navigating between snapshots is currently unpredictable
-- **Needed:** Logical focus order on timeline navigation; `aria-describedby` linking timeline position to snapshot content
-- **Status:** Not yet implemented
 
 #### 1.4.3 Contrast Minimum
 - Metrics displays and state diff views have not been audited for contrast ratios

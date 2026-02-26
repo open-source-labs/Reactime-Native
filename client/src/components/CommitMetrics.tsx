@@ -36,26 +36,28 @@ const CommitMetrics: React.FC = () => {
         <li><strong>Min / Max:</strong> {stats!.min.toFixed(1)} / {stats!.max.toFixed(1)} ms</li>
       </ul>
 
-      <table style={tableStyle}>
-        <thead>
-  <tr>
-    <th style={thStyle}>When</th>
-    <th style={thStyle}>Duration (ms)</th>
-    <th style={thStyle}>Fibers</th>
-    <th style={thStyle}>App</th>
-  </tr>
-</thead>
-<tbody>
-  {commits.slice(-20).reverse().map((c, i) => (
-    <tr key={i}>
-      <td style={tdStyle}>{formatTime(c.ts)}</td>
-      <td style={tdStyle}>{c.durationMs.toFixed(1)}</td>
-      <td style={tdStyle}>{c.fibersUpdated ?? '—'}</td>
-      <td style={tdStyle}>{c.appId ?? '—'}</td>
-    </tr>
-  ))}
-</tbody>
-      </table>
+      <div style={tableWrapperStyle} tabIndex={0} aria-label="Commit metrics table, scrollable">
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={thStyle}>When</th>
+              <th style={thStyle}>Duration (ms)</th>
+              <th style={thStyle}>Fibers</th>
+              <th style={thStyle}>App</th>
+            </tr>
+          </thead>
+          <tbody>
+            {commits.slice(-20).reverse().map((c, i) => (
+              <tr key={i}>
+                <td style={tdStyle}>{formatTime(c.ts)}</td>
+                <td style={tdStyle}>{c.durationMs.toFixed(1)}</td>
+                <td style={tdStyle}>{c.fibersUpdated ?? '—'}</td>
+                <td style={tdStyle}>{c.appId ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <small>Showing latest 20.</small>
     </div>
   );
@@ -91,8 +93,13 @@ const listStyle: React.CSSProperties = {
   margin: '8px 0' 
 };
 
-const tableStyle: React.CSSProperties = { 
-  width: '100%', 
+const tableWrapperStyle: React.CSSProperties = {
+  overflowY: 'auto',
+  maxHeight: 220,
+};
+
+const tableStyle: React.CSSProperties = {
+  width: '100%',
   borderCollapse: 'collapse',
   fontSize: '14px'
 };
@@ -103,10 +110,13 @@ const thStyle: React.CSSProperties = {
   borderBottom: '2px solid #334155',
   fontWeight: '600',
   color: '#94a3b8',
+  position: 'sticky',
+  top: 0,
+  background: '#1e293b',
 };
 
 const tdStyle: React.CSSProperties = {
-  padding: '6px 12px',
+  padding: '8px 12px',
   borderBottom: '1px solid #334155',
   fontFamily: 'var(--font-mono, monospace)',
   fontSize: 13,

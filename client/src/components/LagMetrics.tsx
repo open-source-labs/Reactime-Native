@@ -32,15 +32,17 @@ const LagMetrics: React.FC = () => {
         <li><strong>Max:</strong> {stats!.max.toFixed(1)} ms</li>
       </ul>
 
-      <ol style={olStyle}>
-        {lags.slice(-10).reverse().map((l, i) => (
-          <li key={i}>
-            <span style={{ display: 'inline-block', width: 96 }}>{formatTime(l.ts)}</span>
-            <strong>{l.lagMs.toFixed(1)} ms</strong>
-            {l.appId ? <span style={{ color: '#94a3b8' }}> • {l.appId}</span> : null}
-          </li>
-        ))}
-      </ol>
+      <div style={olWrapperStyle} tabIndex={0} aria-label="Event-loop lag list, scrollable">
+        <ol style={olStyle}>
+          {lags.slice(-10).reverse().map((l, i) => (
+            <li key={i}>
+              <span style={{ display: 'inline-block', width: 96 }}>{formatTime(l.ts)}</span>
+              <strong>{l.lagMs.toFixed(1)} ms</strong>
+              {l.appId ? <span style={{ color: '#94a3b8' }}> • {l.appId}</span> : null}
+            </li>
+          ))}
+        </ol>
+      </div>
       <small>Showing latest 10.</small>
     </div>
   );
@@ -62,5 +64,6 @@ function formatTime(ts: number) {
 }
 
 const listStyle: React.CSSProperties = { display: 'flex', gap: 16, listStyle: 'none', paddingLeft: 0, margin: '8px 0' };
+const olWrapperStyle: React.CSSProperties = { overflowY: 'auto', maxHeight: 75 };
 const olStyle: React.CSSProperties = { margin: '8px 0 0 16px' };
 export default LagMetrics;

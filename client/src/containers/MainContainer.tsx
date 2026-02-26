@@ -204,7 +204,7 @@ const MainContainer: React.FC = () => {
       <ConnectionDebugger />
 
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <main style={{ flex: 1, overflow: 'hidden', display: 'grid', gridTemplateRows: '2fr 1fr' }}>
+        <main style={{ flex: 1, overflow: 'hidden', display: 'grid', gridTemplateRows: '1fr 1fr' }}>
           <section style={{ padding: 16, overflow: 'auto', borderBottom: '1px solid #334155' }}>
             <div
               role="tablist"
@@ -267,7 +267,7 @@ const MainContainer: React.FC = () => {
             )}
           </section>
 
-          <section style={{ padding: 16, overflow: 'auto' }}>
+          <section style={{ padding: 16, overflow: 'hidden' }}>
             <MetricsPanel />
           </section>
         </main>

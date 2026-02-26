@@ -79,7 +79,7 @@ const TimelineControls: React.FC = () => {
   // ── Styles ───────────────────────────────────────────────────────
   const btn = (disabled: boolean): React.CSSProperties => ({
     background: 'transparent',
-    border: '1px solid ' + (disabled ? '#2d3748' : '#4b5563'),
+    border: 'none',
     borderRadius: 'var(--radius-md)',
     color: disabled ? '#4b5563' : '#f1f5f9',
     cursor: disabled ? 'default' : 'pointer',
@@ -88,7 +88,7 @@ const TimelineControls: React.FC = () => {
     lineHeight: 1,
     minWidth: 32,
     padding: '5px 10px',
-    transition: 'border-color var(--transition)',
+    transition: 'color var(--transition)',
   });
 
   const selectStyle: React.CSSProperties = {
@@ -109,14 +109,15 @@ const TimelineControls: React.FC = () => {
       style={{
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 8,
-        padding: '10px 20px',
+        padding: '10px 15px',
         background: '#1e293b',
         borderTop: '1px solid #334155',
         flexShrink: 0,
       }}
     >
-      {/* Play / Pause — WCAG 4.1.2: aria-label toggles with state */}
+      {/* Play / Pause — left of slider; aria-label toggles with state (WCAG 4.1.2) */}
       <button
         onClick={handlePlay}
         disabled={isEmpty}
@@ -131,24 +132,23 @@ const TimelineControls: React.FC = () => {
         <TimelineSlider />
       </div>
 
-      {/* Back — WCAG 4.1.2: descriptive aria-label */}
+      {/* Back / Forward / Speed — right of slider, uniform gap ensures equidistance */}
       <button
         onClick={handleBack}
         disabled={isEmpty || !canStepBack(currentIndex)}
         aria-label="Previous snapshot"
         style={btn(isEmpty || !canStepBack(currentIndex))}
       >
-        ◀
+        ⏪
       </button>
 
-      {/* Forward */}
       <button
         onClick={handleForward}
         disabled={isEmpty || !canStepForward(currentIndex, snapshots.length)}
         aria-label="Next snapshot"
         style={btn(isEmpty || !canStepForward(currentIndex, snapshots.length))}
       >
-        ▶
+        ⏩
       </button>
 
       {/* Speed — WCAG 4.1.2: aria-label on select */}

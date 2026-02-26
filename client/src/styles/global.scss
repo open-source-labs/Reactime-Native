@@ -68,6 +68,13 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
+/* Scrollable containers keyboard-reachable via tabIndex={0} (WCAG 2.4.7) */
+div[tabindex="0"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 /* ============================================================
    rc-slider — focus ring (WCAG 2.4.7 Focus Visible)
    ============================================================ */
