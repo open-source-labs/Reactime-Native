@@ -61,8 +61,9 @@ sequenceDiagram
 
     Note over UI: Developer scrubs timeline
 
-    UI->>S: {channel:'snapshot', type:'jumpTo', payload:{index}}
-    S->>RN: forward jumpTo command
+    Note over UI,RN: 🚧 Planned (v0.2.0) — bidirectional replay not yet implemented
+    UI-->>S: {channel:'snapshot', type:'jumpTo', payload:{index}}
+    S-->>RN: forward jumpTo command
 ```
 
 ---
