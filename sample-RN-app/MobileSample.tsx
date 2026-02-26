@@ -1,15 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Button, Text, StyleSheet, Pressable } from 'react-native';
-import Constants from 'expo-constants';
 import { logFiber, traverse } from './useFiberTree';
-
-/** Compute laptop IP so the phone can reach ws://<IP>:8080 */
-// const devHost =
-//   (Constants.manifest2 as any)?.extra?.expoGo?.developerHostname || // SDK 50
-//   Constants.manifest?.debuggerHost?.split(':')[0] || // older SDK
-//   'localhost'; // fallback
-
-const devHost = '10.0.0.157'; // Will's laptop IP since the above code wasn't working
+import { WS_URL } from './wsConfig';
 
 export default function App() {
   const [count, setCount] = useState(0);
@@ -19,7 +11,7 @@ export default function App() {
 
   /* open WebSocket once */
   useEffect(() => {
-    const socket = new WebSocket(`ws://${devHost}:8080`);
+    const socket = new WebSocket(WS_URL);
     ws.current = socket;
 
     socket.onopen = () => {

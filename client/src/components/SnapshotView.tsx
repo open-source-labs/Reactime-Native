@@ -1,27 +1,26 @@
-// used to render UI and works in tandem with App.tsx (where logic, state, and context are managed) 
-
+// src/components/SnapshotView.tsx
 import React from 'react';
-import { useSelector } from 'react-redux'; //may not need useDispatch if not dispatching actions
-// 'RootState' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
-import type { RootState } from '../store/store';
-//import { jumpToSnapshot } from '../slices/snapshotSlice'; //may not need this
 
-const SnapshotView: React.FC = () => {
-  const { snapshots, currentIndex } = useSelector((s: RootState) => s.snapshot);
-  const current = snapshots[currentIndex];
+export interface SnapshotViewProps {
+  snapshot: unknown;
+  index: number;
+  total: number;
+}
 
+const SnapshotView: React.FC<SnapshotViewProps> = ({ snapshot, index, total }) => {
   return (
-    <div style={{ padding: 12, border: '1px solid #e5e5e5', marginTop: 12 }}>
-      <h3 style={{ margin: 0 }}>Snapshot View</h3>
-      <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>
-        Total: {snapshots.length} | Index: {currentIndex}
+    <div style={{ padding: 12, border: '1px solid #334155', borderRadius: 8, marginTop: 12 }}>
+      <h3 style={{ margin: 0, color: '#f1f5f9' }}>Snapshot View</h3>
+
+      <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>
+        Total: {total} | Index: {index}
       </div>
-      <pre style={{ background: 'navy', padding: 10, overflow: 'auto', maxHeight: 260 }}>
-        {current ? JSON.stringify(current, null, 2) : 'No snapshot selected'}
+
+      <pre style={{ background: '#0f172a', color: '#e2e8f0', fontFamily: 'var(--font-mono, monospace)', fontSize: 13, padding: 10, borderRadius: 6, border: '1px solid #334155', overflow: 'auto', maxHeight: 260, margin: 0 }}>
+        {snapshot ? JSON.stringify(snapshot, null, 2) : 'No snapshot selected'}
       </pre>
     </div>
   );
 };
 
 export default SnapshotView;
-

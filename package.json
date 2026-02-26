@@ -12,7 +12,10 @@
   "description": "Will add description later",
   "main": "index.js",
   "scripts": {
-    "test": "npm run test"
+    "dev": "vite",
+    "test": "npm run test:client && npm run test:rn",
+    "test:client": "cd client && npx vitest run",
+    "test:rn": "cd sample-RN-app && npx vitest run"
   },
   "repository": {
     "type": "git",

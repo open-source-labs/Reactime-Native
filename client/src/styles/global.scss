@@ -1,2 +1,103 @@
+/* ============================================================
+   Design tokens — adapted from original Reactime design system
+   ============================================================ */
+:root {
+  /* Primary accent — Reactime teal */
+  --color-primary:       #14b8a6;
+  --color-primary-dark:  #0d9488;
+  --color-primary-light: #2dd4bf;
+
+  /* Backgrounds */
+  --bg-app:     #0f172a;
+  --bg-panel:   #1e293b;
+  --bg-surface: #2d3748;
+  --bg-hover:   #334155;
+
+  /* Borders */
+  --border-color:      #334155;
+  --border-color-dark: #4b5563;
+
+  /* Text */
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary:  #6b7280;
+
+  /* Status colors (WebSocket / alerts) */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error:   #ef4444;
+
+  /* Elevation */
+  --shadow-panel: 0 4px 6px -1px rgba(0, 0, 0, 0.3),
+                  0 2px 4px -1px rgba(0, 0, 0, 0.2);
+
+  /* Typography */
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+
+  /* Shape */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Motion */
+  --transition: 200ms ease;
+}
+
+/* ============================================================
+   Base reset
+   ============================================================ */
 html, body, #root { height: 100%; }
-body { margin: 0; background: #0f172a; color: #f1f5f9; }
+
+body {
+  margin: 0;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   Interactive controls — focus ring (WCAG 2.4.7 Focus Visible)
+   ============================================================ */
+button:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Scrollable containers keyboard-reachable via tabIndex={0} (WCAG 2.4.7) */
+div[tabindex="0"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+   rc-slider — focus ring (WCAG 2.4.7 Focus Visible)
+   ============================================================ */
+.rc-slider-handle:focus,
+.rc-slider-handle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.45);
+}
+
+/* Override default blue focus ring on rc-slider handle */
+.rc-slider-handle-dragging.rc-slider-handle-dragging.rc-slider-handle-dragging {
+  box-shadow: 0 0 0 5px rgba(20, 184, 166, 0.3);
+  border-color: var(--color-primary);
+}
+
+.rc-slider-track {
+  background-color: var(--color-primary);
+}
+
+.rc-slider-handle {
+  border-color: var(--color-primary);
+}
+
+.rc-slider-handle:hover {
+  border-color: var(--color-primary-dark);
+}
