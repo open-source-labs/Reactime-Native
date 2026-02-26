@@ -37,8 +37,9 @@
 
 #### 2.4.3 Focus Order — Tab Widget + Debug Panel
 - Roving `tabIndex` on tab buttons means Tab enters the group at the active tab and exits without traversing inactive tabs — matches user expectation for a tab widget
-- Debug panel buttons set to `tabIndex={-1}` — the fixed-position panel is position: fixed in the DOM before the main UI, so without this its buttons would be the first Tab stop on the page, before the navigation controls
+- Debug panel refactored from `position: fixed` overlay to an inline 200px sidebar column — buttons are now in natural DOM/Tab order (left sidebar → right snapshot area) matching visual layout. The `position: fixed` approach caused unpredictable focus traversal in Chromium and was confirmed unreachable via keyboard in Safari (which skips `div[tabindex]` elements by default).
 - **WCAG:** SC 2.4.3 — focus order preserves meaning and operability
+- **Engineering note:** See Decision 21 in CLAUDE.md.
 
 #### 4.1.2 Name, Role, Value — Tab Widget
 - `role="tablist"` / `role="tab"` / `role="tabpanel"` applied to tab container, buttons, and panel wrappers respectively
@@ -52,10 +53,24 @@
 
 #### 2.1.1 Keyboard — Scrollable Metrics Containers
 - CommitMetrics table and LagMetrics list wrapped in `tabIndex={0}` divs with `aria-label`
-- Keyboard users Tab to the container and use Page Down / arrow keys to scroll
+- Explicit `onKeyDown` handlers call `scrollBy({ top: ±40, behavior: 'smooth' })` on ArrowDown/ArrowUp — eliminates the browser's scroll-container activation prerequisite (prior mouse click required before keyboard scroll works natively)
 - Preferred over `overflow: hidden` (which hides content from sighted users) and auto-advancing carousel (which requires a WCAG 2.2.2 pause control)
-- **WCAG:** SC 2.1.1 — all content reachable by keyboard; SC 1.3.1 — information equally accessible to all users
-- **Engineering note:** See Decision 19 in CLAUDE.md for the three-option analysis.
+- **WCAG:** SC 2.1.1 — all functionality available via keyboard without prior mouse interaction; SC 1.3.1 — information equally accessible to all users
+- **Engineering note:** See Decisions 19 and 22 in CLAUDE.md.
+
+#### 4.1.2 Name, Role, Value — Timeline Control Buttons
+- Play, Back, and Forward buttons use `aria-disabled` (not the HTML `disabled` attribute)
+- `aria-disabled="true"` keeps buttons in the tab order and announces their state to screen readers; `disabled` would remove them from tab order entirely
+- Click handlers guard against empty state independently of the ARIA attribute
+- **WCAG:** SC 4.1.2 — name, role, and value are programmatically determinable; SC 2.1.1 — controls remain keyboard-reachable in all states
+- **Engineering note:** See Decision 20 in CLAUDE.md.
+
+#### 2.4.3 Focus Order — Timeline Scrubber Above Metrics
+- `TimelineControls` repositioned from below `<main>` to between the snapshot and metrics sections inside the CSS Grid (`gridTemplateRows: '1fr auto 1fr'`)
+- Tab focus order now matches visual order and logical user flow: snapshot tabs → scrubber controls → metrics
+- Previously, keyboard focus reached metrics scroll containers before playback controls — opposite to the causal action order
+- **WCAG:** SC 2.4.3 — focus order preserves meaning and operability
+- **Engineering note:** See Decision 23 in CLAUDE.md for the `auto` grid row guarantee.
 
 #### 2.1.1 Keyboard — Timeline Scrubber
 - Arrow keys on the slider handle step through snapshots one index at a time

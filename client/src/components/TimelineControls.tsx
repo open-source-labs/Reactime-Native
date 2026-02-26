@@ -111,7 +111,7 @@ const TimelineControls: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        padding: '10px 15px',
+        padding: '10px 15px 20px',
         background: '#1e293b',
         borderTop: '1px solid #334155',
         flexShrink: 0,
@@ -120,7 +120,7 @@ const TimelineControls: React.FC = () => {
       {/* Play / Pause — left of slider; aria-label toggles with state (WCAG 4.1.2) */}
       <button
         onClick={handlePlay}
-        disabled={isEmpty}
+        aria-disabled={isEmpty}
         aria-label={playing ? 'Pause' : 'Play'}
         style={btn(isEmpty)}
       >
@@ -135,7 +135,7 @@ const TimelineControls: React.FC = () => {
       {/* Back / Forward / Speed — right of slider, uniform gap ensures equidistance */}
       <button
         onClick={handleBack}
-        disabled={isEmpty || !canStepBack(currentIndex)}
+        aria-disabled={isEmpty || !canStepBack(currentIndex)}
         aria-label="Previous snapshot"
         style={btn(isEmpty || !canStepBack(currentIndex))}
       >
@@ -144,7 +144,7 @@ const TimelineControls: React.FC = () => {
 
       <button
         onClick={handleForward}
-        disabled={isEmpty || !canStepForward(currentIndex, snapshots.length)}
+        aria-disabled={isEmpty || !canStepForward(currentIndex, snapshots.length)}
         aria-label="Next snapshot"
         style={btn(isEmpty || !canStepForward(currentIndex, snapshots.length))}
       >

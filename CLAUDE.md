@@ -490,6 +490,145 @@ keyboard users).
 
 ---
 
+### Decision 20: `aria-disabled` over `disabled` on Timeline Control Buttons
+**Context:** Play, Back, and Forward buttons in `TimelineControls` used the
+HTML `disabled` attribute to communicate an inactive state when no snapshots
+are loaded. `disabled` removes elements from the tab order entirely — keyboard
+users Tab past them without knowing they exist.
+
+**Decision:** Replace `disabled` with `aria-disabled` on all three buttons.
+Click handlers already guard against empty state (`if (isEmpty) return`), so
+no logic changes are needed.
+
+**Rationale:** WCAG 4.1.2 (Name, Role, Value) requires interactive controls
+to expose their state. `aria-disabled="true"` keeps buttons focusable and
+announces them as "dimmed" or "unavailable" to screen readers, giving users
+the full picture of available controls regardless of current state. `disabled`
+is appropriate for form submission contexts; `aria-disabled` is appropriate
+for application controls that are contextually unavailable.
+
+**Tradeoff:** Keyboard users Tab to buttons that cannot currently be activated.
+Acceptable — the visual styling still communicates inactive state, and screen
+reader announcement of `aria-disabled` is unambiguous. No interactive content
+is hidden.
+
+---
+
+### Decision 21: Debug Panel — Inline Sidebar over Position:Fixed Overlay
+**Context:** `ConnectionDebugger` was rendered as a `position: fixed` overlay
+at the top-left of the viewport. Fixed-position elements inside a flex container
+interact unpredictably with Chromium's focus traversal algorithm — the debug
+panel buttons were unreachable via keyboard navigation despite having no
+`tabIndex={-1}` restriction.
+
+**Decision:** Restructure `ConnectionDebugger` as an inline sidebar: a 200px
+`flexShrink: 0` column inside the top-half flex row, with `borderRight` separator.
+Remove `position: fixed` and all `tabIndex={-1}` restrictions on its buttons.
+
+**Rationale:** In-flow elements follow predictable DOM tab order. The sidebar
+approach puts the debug panel in the natural Tab sequence (left column → right
+column) matching the visual layout. A separate investigation confirmed the
+keyboard issue was also a Safari-specific behavior (Safari skips
+`div[tabindex]` elements by default unless Full Keyboard Access is enabled) —
+but the inline sidebar improves spatial clarity and focus order in all browsers.
+
+**Tradeoff:** The debug panel now occupies a fixed 200px column in the top
+half of the layout. Acceptable for the alpha debug panel; the column wrapper
+is marked with a comment for removal when the debug panel is retired.
+
+---
+
+### Decision 22: Explicit `onKeyDown` Scroll Handlers over Native Browser Scroll
+**Context:** CommitMetrics and LagMetrics scroll containers (`tabIndex={0}`
+divs with `overflowY: 'auto'`) required a prior mouse click to "activate"
+before arrow keys would scroll them. This is a browser-native behavior:
+Chromium requires an explicit pointer interaction to designate a scroll target
+before keyboard scrolling is handed to it.
+
+**Decision:** Add explicit `onKeyDown` handlers to both scroll containers.
+ArrowDown/ArrowUp call `e.currentTarget.scrollBy({ top: ±40, behavior: 'smooth' })`
+and `e.preventDefault()` to suppress page-level scroll interference.
+
+**Rationale:** WCAG 2.1.1 requires all functionality to be operable via keyboard
+without requiring prior mouse interaction. Relying on browser-native scroll
+activation is an invisible prerequisite that fails this criterion. Explicit
+handlers eliminate the dependency entirely.
+
+**Tradeoff:** The handlers duplicate behavior the browser provides natively in
+some conditions. The duplication is intentional — it makes the keyboard
+contract explicit and removes the activation prerequisite.
+
+---
+
+### Decision 23: Timeline Scrubber Position — Above Metrics via CSS Grid `auto` Row
+**Context:** `TimelineControls` was placed after `<main>` in the outer flex
+column, rendering it at the very bottom of the viewport below the metrics
+panel. This created two problems: (1) UX — the timeline control that drives
+which snapshot is displayed sat below the metrics it affects, breaking the
+causal reading order. (2) WCAG 2.4.3 (Focus Order) — Tab focus reached
+metrics scroll containers before the playback controls, opposite to the
+logical action flow.
+
+**Alternatives considered:**
+- Keep scrubber at bottom: simple, matches video-player convention, but
+  breaks the causal chain and inverts focus order relative to content.
+- Move scrubber inside the grid with `gridTemplateRows: '1fr 1fr'`: scrubber
+  competes for space with snapshot and metrics halves — no guarantee it won't
+  shrink at small viewport sizes.
+
+**Decision:** Move `TimelineControls` into the CSS Grid as the middle row.
+Change `gridTemplateRows` from `'1fr 1fr'` to `'1fr auto 1fr'`. Place
+`<TimelineControls />` between the snapshot row and the metrics row in the
+JSX.
+
+**Rationale:** CSS Grid resolves `auto` rows first (sized to content), then
+distributes remaining space across `fr` rows. The scrubber row is guaranteed
+to always be exactly its natural content height — it cannot shrink. This is
+a stronger guarantee than `flexShrink: 0` in a flex container. Focus order
+becomes: snapshot tabs → scrubber controls → metrics, matching the visual
+layout and the logical user flow (navigate to a point in time → see
+performance data for that moment).
+
+**Tradeoff:** Scrubber is now inside `<main>` rather than a sibling. The
+`borderTop` separator on `TimelineControls` provides the same visual break.
+No behavioral regressions; WCAG 2.4.3 focus order is improved.
+
+---
+
+### Decision 24: Responsive Metrics Panel — Flex Height Propagation over Fixed `maxHeight`
+**Context:** `CommitMetrics` table wrapper had a hardcoded `maxHeight: 220`.
+At any viewport size, the table was capped at 220px, causing a scrollbar with
+more than ~6 rows visible. When the metrics section was constrained by the
+`1fr` grid row at small viewports, content could visually crowd the scrubber.
+
+**Alternatives considered:**
+- `overflow: 'auto'` on the metrics section: works, but adds a section-level
+  scrollbar that the user found undesirable.
+- Keep `maxHeight: 220`: simple but fixed; wastes vertical space on large
+  displays and always shows a scrollbar with real data.
+- Flex height propagation: propagate `flex: 1, minHeight: 0` from the grid
+  section → MetricsPanel → `cardWide` → CommitMetrics outer div → table wrapper.
+
+**Decision:** Propagate flex height through the chain. Key changes:
+- `MainContainer` metrics section: add `display: 'flex', flexDirection: 'column'`
+- `MetricsPanel` panel: add `flex: 1, minHeight: 0, overflow: 'hidden'`
+- `MetricsPanel` cardWide: add `flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column'`
+- `CommitMetrics` outer div: add `display: 'flex', flexDirection: 'column', height: '100%'`
+- `CommitMetrics` tableWrapperStyle: replace `maxHeight: 220` with `flex: 1, minHeight: 0`
+
+**Rationale:** The table now fills available viewport height. At large viewports,
+more rows are visible without scrolling. At small viewports, a scrollbar appears
+only when the content genuinely cannot fit — the expected, correct behavior.
+`minHeight: 0` is required on flex children to allow shrinking below content
+height (browsers default `min-height: auto` on flex children).
+
+**Tradeoff:** Touches four files across two components. The propagation is
+mechanical but requires understanding the full flex chain. The `minHeight: 0`
+requirement is a known CSS flex gotcha — documented here so the next developer
+doesn't remove it thinking it's redundant.
+
+---
+
 ## Accessibility
 See [ACCESSIBILITY.md](./ACCESSIBILITY.md) for a full log of accessibility
 decisions made and known gaps with WCAG references.

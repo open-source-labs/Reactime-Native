@@ -27,7 +27,7 @@ const CommitMetrics: React.FC = () => {
   }
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <h3 style={{ marginTop: 0 }}>Commit Durations (ms)</h3>
       <ul style={listStyle}>
         <li><strong>Samples:</strong> {stats!.count}</li>
@@ -36,7 +36,17 @@ const CommitMetrics: React.FC = () => {
         <li><strong>Min / Max:</strong> {stats!.min.toFixed(1)} / {stats!.max.toFixed(1)} ms</li>
       </ul>
 
-      <div style={tableWrapperStyle} tabIndex={0} aria-label="Commit metrics table, scrollable">
+      <div
+        style={tableWrapperStyle}
+        tabIndex={0}
+        aria-label="Commit metrics table, scrollable"
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.currentTarget.scrollBy({ top: e.key === 'ArrowDown' ? 40 : -40, behavior: 'smooth' });
+          }
+        }}
+      >
         <table style={tableStyle}>
           <thead>
             <tr>
@@ -66,7 +76,7 @@ const CommitMetrics: React.FC = () => {
 const Empty: React.FC<{ title: string; hint?: string }> = ({ title, hint }) => (
   <div>
     <h3 style={{ marginTop: 0 }}>{title}</h3>
-    <p style={{ margin: 0, color: '#94a3b8' }}>{hint ?? 'No data yet.'}</p>
+    <p role="status" aria-live="polite" style={{ margin: 0, color: '#94a3b8' }}>{hint ?? 'No data yet.'}</p>
   </div>
 );
 
@@ -95,7 +105,8 @@ const listStyle: React.CSSProperties = {
 
 const tableWrapperStyle: React.CSSProperties = {
   overflowY: 'auto',
-  maxHeight: 220,
+  flex: 1,
+  minHeight: 0,
 };
 
 const tableStyle: React.CSSProperties = {

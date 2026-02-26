@@ -31,11 +31,11 @@ const MetricsPanel: React.FC = () => {
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  panel: { display: 'flex', flexDirection: 'column', gap: 16 },
+  panel: { display: 'flex', flexDirection: 'column', gap: 16, flex: 1, minHeight: 0, overflow: 'hidden' },
   h2: { margin: 0 },
   row: { display: 'flex', gap: 16, flexWrap: 'wrap' },
   card: { flex: '1 1 320px', border: '1px solid #334155', borderRadius: 8, padding: 12, backgroundColor: '#1e293b' },
-  cardWide: { border: '1px solid #334155', borderRadius: 8, padding: 12, backgroundColor: '#1e293b' },
+  cardWide: { border: '1px solid #334155', borderRadius: 8, padding: 12, backgroundColor: '#1e293b', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
 };
 
 export default MetricsPanel;

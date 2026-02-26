@@ -99,16 +99,9 @@ const ConnectionDebugger: React.FC = () => {
 
   return (
     <div style={{
-      position: 'fixed',
-      top: 10,
-      right: 10,
       background: '#1e293b',
-      border: '1px solid #334155',
-      borderRadius: 8,
-      padding: '8px 10px',
+      padding: '12px 10px',
       fontSize: 11,
-      zIndex: 1000,
-      maxWidth: 220,
       fontFamily: 'var(--font-sans)',
     }}>
       <h4 style={{ margin: '0 0 6px 0', color: '#f1f5f9', fontSize: 12, fontWeight: 600 }}>Debug Panel</h4>
@@ -135,19 +128,19 @@ const ConnectionDebugger: React.FC = () => {
         <span>First Renders:</span><span>{firstRenders.length}</span>
       </div>
 
-      <button tabIndex={-1} onClick={sendTestSnapshot} style={{ ...btnBase, background: '#3b82f6' }}>
+      <button onClick={sendTestSnapshot} style={{ ...btnBase, background: '#3b82f6' }}>
         Test Snapshot
       </button>
 
-      <button tabIndex={-1} onClick={sendTestCommitMetric} style={{ ...btnBase, background: '#10b981' }}>
+      <button onClick={sendTestCommitMetric} style={{ ...btnBase, background: '#10b981' }}>
         Test Commit Metric
       </button>
 
-      <button tabIndex={-1} onClick={sendTestLagMetric} style={{ ...btnBase, background: '#f59e0b' }}>
+      <button onClick={sendTestLagMetric} style={{ ...btnBase, background: '#f59e0b' }}>
         Test Lag Metric
       </button>
 
-      <button tabIndex={-1} onClick={sendTestFirstRenderMetric} style={{ ...btnBase, background: '#8b5cf6', marginBottom: 0 }}>
+      <button onClick={sendTestFirstRenderMetric} style={{ ...btnBase, background: '#8b5cf6', marginBottom: 0 }}>
         Test First Render
       </button>
     </div>
@@ -200,12 +193,19 @@ const MainContainer: React.FC = () => {
   };
 
   return (
-    <>
-      <ConnectionDebugger />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <main style={{ flex: 1, overflow: 'hidden', display: 'grid', gridTemplateRows: '1fr auto 1fr' }}>
 
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <main style={{ flex: 1, overflow: 'hidden', display: 'grid', gridTemplateRows: '1fr 1fr' }}>
-          <section style={{ padding: 16, overflow: 'auto', borderBottom: '1px solid #334155' }}>
+        {/* Top half: debug panel + snapshot views side by side */}
+        <div style={{ display: 'flex', overflow: 'hidden', borderBottom: '1px solid #334155' }}>
+
+          {/* Debug panel column — remove this div when debug panel is retired */}
+          <div style={{ width: 200, flexShrink: 0, background: '#0f172a', borderRight: '1px solid #334155' }}>
+            <ConnectionDebugger />
+          </div>
+
+          {/* Snapshot tabs + content */}
+          <section style={{ flex: 1, padding: 16, overflow: 'auto' }}>
             <div
               role="tablist"
               aria-label="Snapshot views"
@@ -266,15 +266,18 @@ const MainContainer: React.FC = () => {
               </div>
             )}
           </section>
+        </div>
 
-          <section style={{ padding: 16, overflow: 'hidden' }}>
-            <MetricsPanel />
-          </section>
-        </main>
-
+        {/* Scrubber — auto row, never shrinks */}
         <TimelineControls />
-      </div>
-    </>
+
+        {/* Bottom third: metrics */}
+        <section style={{ padding: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <MetricsPanel />
+        </section>
+
+      </main>
+    </div>
   );
 };
 
