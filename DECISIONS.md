@@ -190,15 +190,16 @@ Each entry follows this structure:
 **Context:** Reactime Native is a tool built to help developers build better apps — including accessible apps. A debugging tool that developers with disabilities cannot use undermines that mission and narrows the field of who can contribute to or benefit from the project.
 
 **Scope of Commitment:**
-- Keyboard-navigable timeline scrubbing (no mouse required) — implemented
-- Proper ARIA roles and labels on all interactive components in the browser UI — substantially implemented; remaining gap is an `aria-live` region for state change announcements
-- Full contrast audit against WCAG 1.4.3 (4.5:1 minimum) — not yet audited
-- High-contrast theme toggle — open
-- Color-independent indicators in the metric panel diff view (shape/label in addition to color) — open
+- Keyboard-navigable timeline scrubbing, tab widget, component tree, and scroll containers — implemented (WCAG 2.1.1)
+- `aria-disabled` on timeline control buttons — keeps Play/Back/Forward in tab order while communicating inactive state to screen readers — implemented (WCAG 4.1.2, 2.1.1)
+- Timeline scrubber repositioned above metrics via CSS Grid `auto` row — Tab focus order now matches visual and causal flow — implemented (WCAG 2.4.3); see Decision 013
+- Proper ARIA roles and labels on all interactive components — substantially implemented; remaining gap is an `aria-live` region for state change announcements (WCAG 4.1.3)
+- Full contrast audit against WCAG 1.4.3 (4.5:1 minimum) — not yet audited; tracked in `ROADMAP.md`
+- Color-independent indicators in the snapshot diff view (shape/label in addition to color) — open; tracked in `ROADMAP.md`
 
 **Rationale:** Accessibility in developer tooling is underserved. Most dev tools treat it as an afterthought. This is a deliberate differentiator for Reactime Native and reflects the team's values around inclusive design. It is also consistent with the shift-left principle — embedding accessibility from the start costs significantly less than retrofitting it later.
 
-**Status:** Partially implemented. ARIA labels and keyboard navigation are in progress. High-contrast theme and color-independent diff indicators are open roadmap items. Contributions welcome — see `CONTRIBUTING.md`.
+**Status:** Keyboard navigation and ARIA labeling substantially complete. `aria-live` region for snapshot changes and contrast audit are the remaining open items. See `ROADMAP.md` for tracking. Contributions welcome — see `CONTRIBUTING.md`.
 
 ---
 
@@ -265,12 +266,60 @@ Each entry follows this structure:
 
 ---
 
+## Decision 012 — SnapshotDiff as a Parallel Tab View
+
+**Date:** February 2026
+**Status:** Confirmed
+
+**Decision:** Implement snapshot diffing as a parallel tab in the browser UI alongside the full snapshot view, rather than replacing the snapshot view with a diff or embedding diffs in the metrics panel.
+
+**Context:** As snapshot history grows, showing the full snapshot state on every timeline jump is repetitive — most state hasn't changed between adjacent snapshots. A mechanism was needed to surface what changed without sacrificing the full state view.
+
+**Alternatives Considered:**
+
+| Option | Consideration |
+|---|---|
+| Replace snapshot view with diff | Loses full state context; harder to understand a snapshot in isolation |
+| Diffs only in metrics panel | Conflates state change data with performance data; confusing information architecture |
+| Parallel tab (chosen) | Developers choose the view they need; full snapshot for context, diff for change tracing |
+
+**Rationale:** The two views serve distinct use cases. Full snapshot is needed when first loading a snapshot or sharing state with a teammate. The diff is needed when tracing a sequence of state changes. Tabs make the choice explicit without cluttering either view.
+
+**Implementation note:** Arrays are compared atomically via `JSON.stringify`; plain objects are diffed recursively. LCS-based array diffing is a known future improvement — the `isPlainObject` boundary in `diffSnapshots.ts` is the explicit extension point.
+
+**Tradeoffs Accepted:** Two views to maintain instead of one. The utility functions (`diffSnapshots.ts`) are pure and independently tested, minimizing maintenance burden.
+
+---
+
+## Decision 013 — Timeline Scrubber Above Metrics via CSS Grid `auto` Row
+
+**Date:** February 2026
+**Status:** Confirmed
+
+**Decision:** Position `TimelineControls` between the snapshot view and the metrics panel in the CSS Grid, using an `auto` row to guarantee the scrubber is never crowded out at any viewport size.
+
+**Context:** The scrubber was originally rendered below `<main>`, at the bottom of the viewport below the metrics panel. This created two problems: the control sat below the content it drives (broken causal reading order), and Tab focus reached the metrics scroll containers before the playback controls (inverted focus order relative to user intent).
+
+**Alternatives Considered:**
+
+| Option | Consideration |
+|---|---|
+| Keep scrubber at bottom | Matches video-player convention; breaks causal reading order; inverts WCAG 2.4.3 focus order relative to visual layout |
+| Move inside grid with `1fr` row | Scrubber competes for space; no size guarantee at small viewports |
+| Move inside grid with `auto` row (chosen) | `auto` rows sized before `fr` distribution; scrubber always exactly its natural height; cannot shrink |
+
+**Rationale:** CSS Grid resolves `auto` rows first (sized to content), then distributes remaining space across `fr` rows. The scrubber row is size-stable at all viewport sizes — a stronger guarantee than `flexShrink: 0` in a flex container. The repositioning also corrects WCAG 2.4.3 (Focus Order): Tab now follows the logical user flow — navigate with the scrubber, then see the snapshot, then see the performance metrics for that moment.
+
+**Tradeoffs Accepted:** The scrubber moves inside `<main>` rather than being a sibling element. No behavioral regressions; the `borderTop` separator provides the same visual break as before.
+
+---
+
 ## Decisions Under Consideration
 
 | Topic | Question | Notes |
 |---|---|---|
 | Bidirectional time-travel | Should the browser UI be able to send "jump to snapshot X" commands back to the mobile app to hot-reload state? | Technically feasible with the existing WebSocket pipeline; significant implementation work; highest-value feature for the core use case |
-| Snapshot diffing | Should the metrics panel show diffs between snapshots rather than (or in addition to) full snapshots? | Would reduce payload size and improve readability for large component trees |
+| LCS array diffing | Should snapshot diffs show element-level changes inside arrays (insertions, deletions, reordering)? | Currently arrays compared atomically via `JSON.stringify`. LCS diffing adds granularity at cost of algorithm complexity. Extension point explicitly marked in `diffSnapshots.ts`. |
 | Flipper plugin | Should RTN offer a Flipper integration path? | Flipper has been deprecated by Meta; likely not worth investment |
 | New Architecture / Fabric support | How does RTN's Fiber tree traversal need to change for RN's New Architecture? | Significant open question as New Architecture adoption grows |
 
