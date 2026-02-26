@@ -32,7 +32,17 @@ const LagMetrics: React.FC = () => {
         <li><strong>Max:</strong> {stats!.max.toFixed(1)} ms</li>
       </ul>
 
-      <div style={olWrapperStyle} tabIndex={0} aria-label="Event-loop lag list, scrollable">
+      <div
+        style={olWrapperStyle}
+        tabIndex={0}
+        aria-label="Event-loop lag list, scrollable"
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.currentTarget.scrollBy({ top: e.key === 'ArrowDown' ? 40 : -40, behavior: 'smooth' });
+          }
+        }}
+      >
         <ol style={olStyle}>
           {lags.slice(-10).reverse().map((l, i) => (
             <li key={i}>
@@ -51,7 +61,7 @@ const LagMetrics: React.FC = () => {
 const Empty: React.FC<{ title: string; hint?: string }> = ({ title, hint }) => (
   <div>
     <h3 style={{ marginTop: 0 }}>{title}</h3>
-    <p style={{ margin: 0, color: '#94a3b8' }}>{hint ?? 'No data yet.'}</p>
+    <p role="status" aria-live="polite" style={{ margin: 0, color: '#94a3b8' }}>{hint ?? 'No data yet.'}</p>
   </div>
 );
 
