@@ -8,6 +8,7 @@ export default function App() {
   const [letter, setLetter] = useState('a');
 
   const ws = useRef<WebSocket | null>(null);
+  const lastEmitTimeRef = useRef<number>(Date.now());
 
   /* open WebSocket once */
   useEffect(() => {
@@ -16,6 +17,7 @@ export default function App() {
 
     socket.onopen = () => {
       console.log('🔌 WS connected');
+      const firstRenderMs = Date.now() - lastEmitTimeRef.current;
       socket.send(
         JSON.stringify({
           channel: 'snapshot',
@@ -27,6 +29,18 @@ export default function App() {
           },
         })
       );
+      socket.send(
+        JSON.stringify({
+          channel: 'metrics',
+          type: 'firstRender',
+          payload: {
+            ts: Date.now(),
+            firstRenderMs,
+            appId: 'reactime-native-demo',
+          },
+        })
+      );
+      lastEmitTimeRef.current = Date.now();
     };
     socket.onerror = (e) => {
       console.log('WS error', (e as any).message ?? e);
@@ -40,6 +54,8 @@ export default function App() {
   const emit = (nextCount: number, nextLetter: string) => {
     const socket = ws.current;
     if (socket?.readyState === WebSocket.OPEN) {
+      const durationMs = Date.now() - lastEmitTimeRef.current;
+      lastEmitTimeRef.current = Date.now();
       socket.send(
         JSON.stringify({
           channel: 'snapshot',
@@ -48,6 +64,17 @@ export default function App() {
             count: nextCount,
             letter: nextLetter,
             timestamp: new Date().toISOString(),
+          },
+        })
+      );
+      socket.send(
+        JSON.stringify({
+          channel: 'metrics',
+          type: 'commit',
+          payload: {
+            ts: Date.now(),
+            durationMs,
+            appId: 'reactime-native-demo',
           },
         })
       );

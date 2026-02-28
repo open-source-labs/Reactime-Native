@@ -2,7 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../store/store';
-import { wsSend, getSocketReadyState } from '../transport/socket';
+import { getSocketReadyState } from '../transport/socket';
+import { addSnapshot } from '../slices/snapshotSlice';
+import { pushCommitMetric, pushLagMetric, pushFirstRenderMetric } from '../slices/metricSlice';
 import SnapshotView from '../components/SnapshotView';
 import SnapshotDiff from '../components/SnapshotDiff';
 import ComponentTree from '../components/ComponentTree';
@@ -26,62 +28,46 @@ const ConnectionDebugger: React.FC = () => {
   }, []);
 
   const sendTestSnapshot = () => {
-    const testSnapshot = {
-      channel: 'snapshot',
-      type: 'add',
-      payload: {
-        id: `manual-test-${Date.now()}`,
-        timestamp: Date.now(),
-        component: 'TestComponent',
-        props: { name: 'Manual Test' },
-        state: { count: Math.floor(Math.random() * 100) }
-      }
+    const payload = {
+      id: `manual-test-${Date.now()}`,
+      timestamp: Date.now(),
+      component: 'TestComponent',
+      props: { name: 'Manual Test' },
+      state: { count: Math.floor(Math.random() * 100) }
     };
-    console.log('📤 Sending test snapshot:', testSnapshot);
-    dispatch(wsSend(testSnapshot));
+    console.log('📤 Sending test snapshot:', payload);
+    dispatch(addSnapshot(payload));
   };
 
   const sendTestCommitMetric = () => {
-    const testMetric = {
-      channel: 'metrics',
-      type: 'commit',
-      payload: {
-        ts: Date.now(),
-        durationMs: Math.random() * 50 + 10,
-        fibersUpdated: Math.floor(Math.random() * 10) + 1,
-        appId: 'debug-test'
-      }
+    const payload = {
+      ts: Date.now(),
+      durationMs: Math.random() * 50 + 10,
+      fibersUpdated: Math.floor(Math.random() * 10) + 1,
+      appId: 'debug-test'
     };
-    console.log('📊 Sending test metric:', testMetric);
-    dispatch(wsSend(testMetric));
+    console.log('📊 Sending test metric:', payload);
+    dispatch(pushCommitMetric(payload));
   };
 
   const sendTestLagMetric = () => {
-    const testMetric = {
-      channel: 'metrics',
-      type: 'lag',
-      payload: {
-        ts: Date.now(),
-        lagMs: Math.random() * 100 + 5,
-        appId: 'debug-test'
-      }
+    const payload = {
+      ts: Date.now(),
+      lagMs: Math.random() * 100 + 5,
+      appId: 'debug-test'
     };
-    console.log('⏱️ Sending test lag metric:', testMetric);
-    dispatch(wsSend(testMetric));
+    console.log('⏱️ Sending test lag metric:', payload);
+    dispatch(pushLagMetric(payload));
   };
 
   const sendTestFirstRenderMetric = () => {
-    const testMetric = {
-      channel: 'metrics',
-      type: 'firstRender',
-      payload: {
-        ts: Date.now(),
-        firstRenderMs: Math.random() * 2000 + 500,
-        appId: 'debug-test'
-      }
+    const payload = {
+      ts: Date.now(),
+      firstRenderMs: Math.random() * 2000 + 500,
+      appId: 'debug-test'
     };
-    console.log('🚀 Sending test first render metric:', testMetric);
-    dispatch(wsSend(testMetric));
+    console.log('🚀 Sending test first render metric:', payload);
+    dispatch(pushFirstRenderMetric(payload));
   };
 
   const btnBase: React.CSSProperties = {
