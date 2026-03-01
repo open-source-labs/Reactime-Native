@@ -106,7 +106,8 @@ function triggerOpen(): void {
 }
 
 /** Parse the JSON payload from the most recent socket.send() call. */
-function lastSentPayload(): Record<string, unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function lastSentPayload(): any {
   const calls = mockSocket.send.mock.calls;
   return JSON.parse(calls[calls.length - 1][0]);
 }
@@ -143,10 +144,12 @@ describe('MobileSample (unit)', () => {
     triggerOpen();
 
     expect(mockSocket.send).toHaveBeenCalledOnce();
-    const payload = lastSentPayload();
-    expect(payload.count).toBe(0);
-    expect(payload.letter).toBe('a');
-    expect(typeof payload.timestamp).toBe('string');
+    const msg = lastSentPayload();
+    expect(msg.channel).toBe('snapshot');
+    expect(msg.type).toBe('add');
+    expect(msg.payload.count).toBe(0);
+    expect(msg.payload.letter).toBe('a');
+    expect(typeof msg.payload.timestamp).toBe('string');
   });
 
   // 3 ─────────────────────────────────────────────────────────────────────────
@@ -158,9 +161,11 @@ describe('MobileSample (unit)', () => {
     fireEvent.click(screen.getByRole('button', { name: '+1' }));
 
     expect(mockSocket.send).toHaveBeenCalledOnce();
-    const payload = lastSentPayload();
-    expect(payload.count).toBe(1);
-    expect(payload.letter).toBe('a');
+    const msg = lastSentPayload();
+    expect(msg.channel).toBe('snapshot');
+    expect(msg.type).toBe('add');
+    expect(msg.payload.count).toBe(1);
+    expect(msg.payload.letter).toBe('a');
   });
 
   // 4 ─────────────────────────────────────────────────────────────────────────
@@ -172,9 +177,11 @@ describe('MobileSample (unit)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'next letter' }));
 
     expect(mockSocket.send).toHaveBeenCalledOnce();
-    const payload = lastSentPayload();
-    expect(payload.count).toBe(0);
-    expect(payload.letter).toBe('b');
+    const msg = lastSentPayload();
+    expect(msg.channel).toBe('snapshot');
+    expect(msg.type).toBe('add');
+    expect(msg.payload.count).toBe(0);
+    expect(msg.payload.letter).toBe('b');
   });
 
   // 5 ─────────────────────────────────────────────────────────────────────────
