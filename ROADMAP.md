@@ -30,6 +30,10 @@ These items complete the core value proposition of the tool: full state visibili
 
 - [ ] **Complete performance metrics serialization** — Extend commit metrics capture beyond the first render; ensure lag and first-render data is emitted consistently across the full app lifecycle.
 
+- [ ] **Refactor `LagMetrics` to pipeline latency** — `LagMetrics` currently waits for a `metrics/lag` message that `MobileSample` never sends, so the panel is always empty in the live app. Refactor `socket.ts` to compute lag at receive time (`Date.now() - new Date(msg.payload.timestamp).getTime()`) and dispatch `pushLagMetric` alongside `addSnapshot` on every `snapshot/add` message. Update the `LagMetrics` heading from "Event-Loop Lag" to "Snapshot Transport Lag" or "Pipeline Latency". Caveat: accuracy depends on clock sync between the RN device and the browser machine — acceptable on a LAN dev environment, worth a code comment.
+
+- [ ] **Reframe `metrics/commit` in `MobileSample`** — The `durationMs` value sent on each `emit()` call measures time between user interactions (action interval), not a React render commit duration. True commit duration requires fiber instrumentation from Will's `feat/fiber-capture` work. Until that lands, either relabel the send as `actionIntervalMs` with a matching UI heading, or remove it and let `CommitMetrics` wait for real fiber data.
+
 ---
 
 ## v0.3.0 — npm Packaging
